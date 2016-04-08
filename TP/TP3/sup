@@ -1,0 +1,22 @@
+#!/bin/bash
+
+if [ ! -d $HOME/.poubelle ]; then
+	mkdir $HOME/.poubelle
+fi
+
+find $HOME/.poubelle -ctime +30 -exec rm {} \;
+
+for fichier in $* ; do
+if [ -f $fichier -o -d $fichier ]; then
+	if [ `ls -a $HOME/.poubelle | grep -c $fichier` -eq 0 ]; then
+		touch $fichier
+		mv $fichier $HOME/.poubelle
+	else
+		rm -r $HOME/.poubelle/$fichier
+		touch $fichier
+		mv $fichier $HOME/.poubelle
+	fi
+else
+	echo $fichier n\'est pas la
+fi
+done

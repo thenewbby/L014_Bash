@@ -1,0 +1,6 @@
+#!/bin/bash
+
+for fichier in $(ls *.tarif)
+do
+	echo "Dans le pay `basename $fichier .tarif`, le baril est à `cat $fichier`\$"
+done

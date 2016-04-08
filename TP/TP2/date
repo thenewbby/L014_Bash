@@ -1,0 +1,19 @@
+#!/bin/bash
+
+month=$(date +%m)
+day=$(date +%a)
+tme=$(date +%R)
+
+case $month in
+	"04" )
+		month="Avril";;
+esac
+
+case $day in
+	"Mon" )
+		day="Lundi";;
+	"Tue" )
+		day="Mardi";;
+esac
+
+echo "$day `date +%d` $month `date +%Y` à $tme"

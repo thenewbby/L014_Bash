@@ -1,0 +1,17 @@
+#!/bin/bash
+
+
+function test_pala {
+for word in $*; do
+  if [ `echo $word` == `echo $word | rev` ]; then
+    echo "$word est un palindrome"
+  else
+    echo "$word n'est pas un palimdrome"
+  fi
+done
+}
+
+while read line
+do
+  test_pala $line
+done < $1
