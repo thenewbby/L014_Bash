@@ -1,0 +1,82 @@
+Ce document est pour définir certain point du projet.
+
+Glossaire:
+- RacineB : chemin absolue vers le point de synchronisation
+- RacineA : chemin absolue vers le point à synchroniser
+- J : le journal de synchronisation (./synchro)
+- A : fichier ou directory de la branche A
+- B : fichier ou directory de la branche B
+- A == J: Fichier/Directory conforme avec le journal
+- B != J: Fichier/Directory non conforme avec le journal
+- A X J: Fichier/Directory non présent dans la branche
+
+QUESTION
+
+-donner la possibilité a l'utilisateur de donner une RacineB
+-Algo recursive
+
+
+
+
+STRUCTURE FICHIER ./synchro (dans $HOME)
+
+(1ier ligne: RacineB) si RacineB non fixe
+niem ligne: DATA ======(sous forme)========>  RacineA/Chemin/NomFichier/Directory ModificationDate Permission Taille
+
+
+DIFFERENT CAS POSSIBLE
+
+IF A == Dir && B == Fich || A == Fich && B == Dir
+  1) CONFLIT
+ELSEIF A ==DIR && B == DIR
+  2) RECURSIVE
+ELSEIF A == Fich && B == Fich
+  IF A == J == B
+    3) OK
+  ELSEIF A != J == B
+    4) Mise a jour A
+  ELSEIF A == J != B
+    5) Mise a jour B
+  ELSEIF A != J != B
+    6) CONFLIT
+  ELSEIF A X J == B
+    7) Copie-Colle B dans A
+  ELSEIF A == J X B
+    8) Copie-Colle A dans B
+  EndIF
+EndIF
+
+
+
+
+ALGO DEPART cas RacineB fixe
+
+  RacineB = XX
+  RacineA = PARAMETTRE
+  IF ./synchro existe
+    IF RacineA est au dessus de racineB dans l'arborescence
+      effacer ./synchro
+      effacer RacineB
+    EndIf
+  Else
+    Creer ./synchro
+  EndIf
+  appelle ALGO MAIN
+
+
+
+ALGO DEPART cas RacineB non fixe
+
+  RacineB1 = PARAMETTRE
+  RacineA = PARAMETTRE
+  IF ./synchro existe
+    récuperer RacineB2 dans ./synchro
+    IF RacineA est au dessus de racineB dans l'arborescence || RacineB1 != RacineB2
+      effacer ./synchro
+      effacer RacineB2
+    EndIf
+  Else
+    Creer ./synchro
+    ecrire RacineB1 dans ./synchro
+  EndIf
+  appelle ALGO MAIN
