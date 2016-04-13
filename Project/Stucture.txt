@@ -16,7 +16,11 @@ QUESTION
 
 -donner la possibilité a l'utilisateur de donner une RacineB
 -Algo recursive
+-Faire un algo pour mettre a jour le journal
 
+A PENSER
+
+-tester le propriétaire du fichier, le groupe
 
 
 
@@ -70,7 +74,12 @@ CONFLIT
 
 A définir
 
+BOUT DE CODE UTILE
 
+Print octal right : stat -c "%a" FILE
+print size in bits : stat -c "%s" FILE
+print ID of group : stat -c "%g" FILE
+print ID of owner : stat -c "%u" FILE
 
 
 ALGO DEPART cas RacineB fixe
