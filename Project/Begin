@@ -1,29 +1,52 @@
 #/bin/bash
 
+# $1 RacineA
+
 RacineB=~/racineB/
-RacineA=$1
-#echo $PATH
-#echo $RacineA
-if [[ -d $RacineA ]]; then
-  #echo $(basename $RacineA)
-  DirPath=$RacineA
-  DirectoryRacine=$(basename $RacineA)
-elif [[ -f $RacineA ]]; then
-  #echo $(basename -- "$(dirname -- "$RacineA")")
-  DirPath=$(dirname $RacineA)/
-  DirectoryRacine=$(basename -- "$(dirname -- "$RacineA")")
-else
-  echo "$RacineA n'existe pas"
-fi
-echo $DirPath
-echo $DirectoryRacine
-if [[ -e $RacineB/.synchro && -e $RacineA ]]; then
-  if [[ -z `find $RacineB -name $DirectoryRacine` ]]; then #si il ne trouve pas le directory dans la racineB
-    rm -rf $RacineB*
-    cp -rv $DirPath $RacineB
-    echo 1 #> $RacineB.synchro
+
+if [[ $# -ne 0 ]]; then
+  RacineA=$1
+  #echo $RacineA
+  if [[ -d $RacineA ]]; then
+    #echo $(basename $RacineA)
+    DirPath=$RacineA
+    DirectoryRacine=$(basename $RacineA)
+  elif [[ -f $RacineA ]]; then
+    #echo $(basename -- "$(dirname -- "$RacineA")")
+    DirPath=$(dirname $RacineA)/
+    DirectoryRacine=$(basename -- "$(dirname -- "$RacineA")")
+  else
+    echo "$RacineA n'existe pas"
+  fi
+  echo $DirPath
+  echo $DirectoryRacine
+  if [[ -e $RacineB.synchro && -e $RacineA ]]; then
+    if [[ -z `find $RacineB -name $DirectoryRacine` ]]; then #si il ne trouve pas le directory dans la racineB
+      rm -rf $RacineB*
+      cp -rv $DirPath $RacineB
+      echo $DirPath > $RacineB.Config
+      echo 1 #> $RacineB.synchro
+    fi
+    #Fonction
+  else
+    echo 2 #> $RacineB.synchro
+    echo $DirPath > $RacineB.Config
+    echo "" > $RacineB.synchro
+    #Fonction
   fi
 else
-  echo 2 #> $RacineB.synchro
-  echo "" > $RacineB.synchro
+  if [[ -e $RacineB.Config ]]; then
+    RacineA=$(head -n 1 $RacineB.Config)
+    DirPath=$(pwd)
+    DirectoryRacine=$(basename $(pwd))
+    if [[ -z `find $RacineB -name $DirectoryRacine` ]]; then #si il ne trouve pas le directory dans la racineB
+      rm -rf $RacineB*
+      cp -rv $DirPath $RacineB
+      echo $DirPath > $RacineB.Config
+      echo 3 #> $RacineB.synchro
+    fi
+    #Fonction
+  else
+    echo "pas de parametre ni de fichier .Config"
+  fi
 fi
