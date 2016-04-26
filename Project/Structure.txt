@@ -15,7 +15,6 @@ Glossaire:
 QUESTION
 
 -donner la possibilité a l'utilisateur de donner une RacineB
--Algo recursive
 -Faire un algo pour mettre a jour le journal
 
 A PENSER
@@ -27,13 +26,13 @@ A PENSER
 STRUCTURE FICHIER ./synchro (dans $HOME)
 
 (1ier ligne: RacineOrigineB) si RacineOrigineB non fixe
-niem ligne: DATA ======(sous forme)========>  RacineOrigineA /Chemin/ NomFichier/Directory ModificationDate Permission Taille
+niem ligne: DATA ======(sous forme)========>  RacineOrigineA /Chemin/ NomFichier\Directory PermissionOctal ModificationDate Taille IDGroup IDOwner
 
 ou
 
 1ier ligne: RacineOrigineA
 (2ier ligne: RacineOrigineB) si RacineOrigineB non fixe
-niem ligne: DATA ======(sous forme)========>  /Chemin/NomFichier/Directory ModificationDate Permission Taille
+niem ligne: DATA ======(sous forme)========>  /Chemin/ NomFichier\Directory PermissionOctal ModificationDate Taille IDGroup IDOwner
 
 DIFFERENT CAS POSSIBLE
 
@@ -77,6 +76,7 @@ A définir
 BOUT DE CODE UTILE
 
 Print octal right : stat -c "%a" FILE
+Print modification date : stat -c "%Y" FILE
 print size in bits : stat -c "%s" FILE
 print ID of group : stat -c "%g" FILE
 print ID of owner : stat -c "%u" FILE
@@ -86,7 +86,7 @@ ALGO DEPART cas RacineB fixe
 
   RacineB = XX
   RacineA = PARAMETTRE
-  IF ./synchro existe
+  IF ./.synchro existe
     IF RacineA est au dessus de racineB dans l'arborescence
       effacer ./synchro
       effacer RacineB
