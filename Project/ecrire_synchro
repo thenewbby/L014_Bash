@@ -12,7 +12,7 @@ for fichier in `ls $1`; do
     stat -c "%g" $1$fichier
     stat -c "%u" $1$fichier
     #echo `sed "s|\/{.}+$||g" <<< "$fichier"`
-    echo `sed "s|^\(\$RacineOrigine\)\(.*\/\)\(.*\)$|\1 \2 \3|" <<< "$1$fichier"` `stat -c "%a" $1$fichier` `stat -c "%s" $1$fichier` `stat -c "%g" $1$fichier` `stat -c "%u" $1$fichier` >> ./.synchro
+    echo `sed "s|^\(\$RacineOrigine\)\(.*\/\)\(.*\)$|\1 \2 \3|" <<< "$1$fichier"` `stat -c "%a" $1$fichier` `stat -c "%Y" $1$fichier` `stat -c "%s" $1$fichier` `stat -c "%g" $1$fichier` `stat -c "%u" $1$fichier` >> /.synchro
   elif [[ -d $1$fichier ]]; then
     echo $1$fichier/
     echo `sed "s|^\(\$RacineOrigine\)\(.*\/\)\(.*\)$|\1 \2 \3|" <<< "$1$fichier/"`
@@ -20,7 +20,7 @@ for fichier in `ls $1`; do
     stat -c "%s" $1$fichier/
     stat -c "%g" $1$fichier/
     stat -c "%u" $1$fichier/
-    echo `sed "s|^\(\$RacineOrigine\)\(.*\/\)\(.*\)$|\1 \2 \3|" <<< "$1$fichier/"` `stat -c "%a" $1$fichier/` `stat -c "%s" $1$fichier/` `stat -c "%g" $1$fichier/` `stat -c "%u" $1$fichier/`>> ./.synchro
+    echo `sed "s|^\(\$RacineOrigine\)\(.*\/\)\(.*\)$|\1 \2 \3|" <<< "$1$fichier/"` `stat -c "%a" $1$fichier/` `stat -c "%Y" $1$fichier/` `stat -c "%s" $1$fichier/` `stat -c "%g" $1$fichier/` `stat -c "%u" $1$fichier/`>> /.synchro
     ./ecrirsyncho $1$fichier/
   fi
 done
