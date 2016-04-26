@@ -1,0 +1,29 @@
+#/bin/bash
+
+RacineB=~/racineB/
+RacineA=$1
+#echo $PATH
+#echo $RacineA
+if [[ -d $RacineA ]]; then
+  #echo $(basename $RacineA)
+  DirPath=$RacineA
+  DirectoryRacine=$(basename $RacineA)
+elif [[ -f $RacineA ]]; then
+  #echo $(basename -- "$(dirname -- "$RacineA")")
+  DirPath=$(dirname $RacineA)/
+  DirectoryRacine=$(basename -- "$(dirname -- "$RacineA")")
+else
+  echo "$RacineA n'existe pas"
+fi
+echo $DirPath
+echo $DirectoryRacine
+if [[ -e $RacineB/.synchro && -e $RacineA ]]; then
+  if [[ -z `find $RacineB -name $DirectoryRacine` ]]; then #si il ne trouve pas le directory dans la racineB
+    rm -rf $RacineB*
+    cp -rv $DirPath $RacineB
+    echo 1 #> $RacineB.synchro
+  fi
+else
+  echo 2 #> $RacineB.synchro
+  echo "" > $RacineB.synchro
+fi
