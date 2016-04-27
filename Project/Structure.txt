@@ -26,19 +26,19 @@ A PENSER
 STRUCTURE FICHIER ./synchro (dans $HOME)
 
 (1ier ligne: RacineOrigineB) si RacineOrigineB non fixe
-niem ligne: DATA ======(sous forme)========>  RacineOrigineA /Chemin/ NomFichier\Directory PermissionOctal ModificationDate Taille IDGroup IDOwner
+niem ligne: DATA ======(sous forme)========>  RacineOrigineA /Chemin/NomFichier\Directory PermissionOctal ModificationDate Taille IDGroup IDOwner
 
 ou
 
 1ier ligne: RacineOrigineA
 (2ier ligne: RacineOrigineB) si RacineOrigineB non fixe
-niem ligne: DATA ======(sous forme)========>  /Chemin/ NomFichier\Directory PermissionOctal ModificationDate Taille IDGroup IDOwner
+niem ligne: DATA ======(sous forme)========>  /Chemin/NomFichier\Directory PermissionOctal ModificationDate Taille IDGroup IDOwner
 
 DIFFERENT CAS POSSIBLE
 
 IF A == Dir && B == Fich || A == Fich && B == Dir
   1) CONFLIT
-ELSEIF A ==DIR && B == DIR
+ELSEIF A ==DIR && B == DIR && A == J == B
   2) RECURSIVE
 ELSEIF A == Fich && B == Fich
   IF A == J == B
