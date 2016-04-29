@@ -25,18 +25,18 @@ if [[ $# -eq 1 ]]; then # si on a un paramettre
       cp -rv $DirPath $RacineB/ #copie colle le dossier (a enlever)
       echo $DirPath > $RacineB/.Config #ecrit le fichier .Config
       echo "" > $RacineB/.synchro #reset le fichier .synchro
-      #./Main $DirPath $RacineB "" 0
+      $(dirname $0)/Main $DirPath $RacineB "" 0
     else
       RacineA=$(head -n 1 $RacineB/.Config)
       Chemin=$(sed "s|${RacineA}||" <<< "$DirPath")
       echo $RacineA
       echo $Chemin
-      #./Main $RacineA $RacineB $Chemin 0
+      $(dirname $0)/Main $RacineA $RacineB $Chemin 0
     fi
   elif [[ !(-e $RacineB/.synchro) && -e $RacineA  ]]; then # si pas de fichier .synchro et que la RacineA pointe vers quelque chose
     echo $DirPath > $RacineB/.Config
     echo "" > $RacineB/.synchro
-    #./Main $DirPath $RacineB "" 0
+    $(dirname $0)/Main $DirPath $RacineB "" 0
   fi
 
 elif [[ $# -eq 0 ]]; then #si pas de paramettre passé
@@ -45,19 +45,25 @@ elif [[ $# -eq 0 ]]; then #si pas de paramettre passé
     DirPath=$(pwd)/
     DirectoryRacine=$(basename $(pwd))
     if [[ -z `find $RacineB -name $DirectoryRacine` ]]; then #si il ne trouve pas le directory dans la racineB
-      echo "ATTENTION: vous allez ecraser votre ancienne synchronisation de Racine: '$RacineA' par '$DirPath'. [y/N]"
-      read rep
+      read -p "ATTENTION: vous allez ecraser votre ancienne synchronisation de Racine: '$RacineA' par '$DirPath'. [y/N]: " rep
       if [[ rep='y' ]]; then # si reponse est oui
         rm -rf $RacineB/* #supprime l'ancienne synchonisation
         echo $DirPath > $RacineB/.Config #ecrit le fichier .Config
         echo "" > $RacineB/.synchro #reset le fichier .synchro
-        #./Main $DirPath $RacineB "" 0
+        $(dirname $0)/Main $DirPath $RacineB "" 0
       fi
     else
-      #./Main $RacineA $RacineB "" 0
+      $(dirname $0)/Main $RacineA $RacineB "" 0
     fi
   else #Si le fichier .Config n'existe pas
-    echo "pas de parametre ni de fichier .Config: vous n'avez pas commencé une synchonisation"
+    DirPath=$(pwd)/
+    echo "Pas de parametre ni de fichier .Config: vous n'avez pas commencé une synchonisation"
+    read -p "Voulez vous faire une synchronisation à la racine '$DirPath'. [y/N]: " rep
+    if [[ rep='y' ]]; then # si reponse est oui
+      echo $DirPath > $RacineB/.Config #ecrit le fichier .Config
+      echo "" > $RacineB/.synchro #reset le fichier .synchro
+      $(dirname $0)/Main $DirPath $RacineB "" 0
+    fi
   fi
 
 else # si plus de un parametre
