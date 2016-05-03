@@ -1,30 +1,31 @@
 #!/bin/bash
 
-# $1 RacineA/
-# $2 RacineB/
-# $3 Chemin/
-# $4 niveau de récurcivité
+# probleme sur condition dans TestSynchro
 
-RacineA=$1
-RacineB=$2
-Chemin=$3
-NbRecur=$4
 
 function MAJ {
   #$1 RacineA
   #$2 Fichier/directory à déplacer
   #$3 Chemin à le mettre
   #$4 avec écriture dans le .synchro
+  #$5 RacineB/.synchro
+  echo ""
+  echo -e "\e[4mMAJ \e[0m"
+  echo -e "\e[1mRacineA:\e[0m $1"
+  echo -e "\e[1mFichier à déplacer:\e[0m $2"
+  echo -e "\e[1mChemin ou le mettre:\e[0m $3"
+  echo ""
 
-
-  cp -rf--preserve=timestamps $2 $3
+  cp -rvf --preserve=all $2 $3
   if [[ $4 -eq 1 ]]; then
     if [[ -d $2 ]]; then
-      echo `sed "s|^\(\$1\)\(.*\)$|\1 \2|" <<< "$2"` `stat -c "%a" $2` `stat -c "%Y" $2` `stat -c "%s" $2` `stat -c "%g" $2` `stat -c "%u" $2` >> /.synchro
-      ecrire_synchro $2 $1
+      echo -e "\e[1mDirectory:\e[0m"
+      echo "`sed "s|^\(\$1\)\(.*\)$|\1 \2|" <<< "$2"`" "`stat -c "%a" $2`" "`stat -c "%Y" $2`" "`stat -c "%s" $2`" "`stat -c "%g" $2`" "`stat -c "%u" $2`" >> $5
+      "$(dirname $0)"/ecrire_synchro "$2" "$1" "$5"
     else
-      echo `sed "s|^\(\$1\)\(.*\)$|\1 \2|" <<< "$2"` `stat -c "%a" $2` `stat -c "%Y" $2` `stat -c "%s" $2` `stat -c "%g" $2` `stat -c "%u" $2` >> /.synchro
-    fi
+      echo -e "\e[1mFichier:\e[0m"
+      echo "`sed "s|^\(\$1\)\(.*\)$|\1 \2|" <<< "$2"`" "`stat -c "%a" $2`" "`stat -c "%Y" $2`" "`stat -c "%s" $2`" "`stat -c "%g" $2`" "`stat -c "%u" $2`" >> $5
+      fi
   fi
 }
 
@@ -35,19 +36,52 @@ function TestSynchro {
   #$3 Chemin/
   #$4 niveau de récurcivité
 
+  echo ""
+  echo -e "\e[4mTestSynchro\e[0m"
+  echo -e "\e[1mRacineA:\e[0m $1"
+  echo -e "\e[1mRacineB:\e[0m $2"
+  echo -e "\e[1mChemin:\e[0m $3"
+  echo -e "\e[1mExiste à racineA:\e[0m $(test -e "$1$3" | echo $?)"
+  echo -e "\e[1mExiste à racineB:\e[0m $(test -e $2"$(basename $1)"/$3 | echo $?)"
+  echo -e "\e[1mTest grep:\e[0m $(test -z "$(egrep '^\$1 \$3 .+$' $2.synchro)" | echo $?)"
 
-  if [[ -f $1$3 && !(-f $2$(basename $1)$3) && -n $(egrep '^\$1 \$3 .+$' $RacineB/.synchro) ]]; then #si est dans RacineA, pas dans RacineB et dans le .synchro
-    MAJ $1 $1$3 $2$3 1
+  if ! ( egrep -q '^\$1 \$3 .+$' $2.synchro ) ; then
+    echo zafhs
+  fi
+
+  if test -e $1$3 && ! (test -e "$2$(basename $1)/$3" ) && ! ( egrep -q '^\$1 \$3 .+$' $2.synchro ) ; then #si est dans RacineA, pas dans RacineB et dans le .synchro
+    MAJ "$1" "$1$3" "$2$3" 1 "$2.synchro"
   fi
 }
 
+#----------------------------------------------Main----------------------------------------------------------------------------
+# $1 RacineA/
+# $2 RacineB/
+# $3 Chemin/
+# $4 niveau de récurcivité
+
+RacineA=$1
+RacineB=$2
+Chemin=$3
+NbRecur=$4
+
+echo ""
+echo -e "\e[4mMain\e[0m"
+echo -e "\e[1mRacineA:\e[0m $RacineA"
+echo -e "\e[1mRacineB:\e[0m $RacineB"
+echo -e "\e[1mChemin:\e[0m $Chemin"
+
+TestSynchro "$RacineA" "$RacineB" "$Chemin$fichier" "$NbRecur"
 
 for fichier in $(ls $RacineA$Chemin); do
-  $(dirname $0)/TestSynchro $1 $2 $3$fichier $4
+  TestSynchro "$RacineA" "$RacineB" "$Chemin$fichier" "$NbRecur"
 done
 
-for fichier in $(ls $RacineB$(basename $RacineA)/$Chemin); do
+echo -e "\n\e[7mFIN boucle A\e[0m\n"
+
+for fichier in $(ls $RacineB"$(basename $RacineA)"/$Chemin); do
   #test B avec J
+  echo "hello"
 done
 if [[ $5 -eq 0 ]]; then
   #test J pour ligne en trop
