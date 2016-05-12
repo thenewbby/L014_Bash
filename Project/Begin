@@ -24,7 +24,7 @@ if [[ $# -eq 1 ]]; then # si on a un paramettre
       rm -rf $RacineB* #supprime l'ancienne synchonisation
       cp -rv $DirPath $RacineB #copie colle le dossier (a enlever)
       echo $DirPath > $RacineB.Config #ecrit le fichier .Config
-      echo "" > $RacineB.synchro #reset le fichier .synchro
+      rm $RacineB.synchro #reset le fichier .synchro
       "$(dirname $0)"/Main "$DirPath" "$RacineB" "" 0
     else
       RacineA=$(head -n 1 $RacineB.Config)
@@ -35,7 +35,7 @@ if [[ $# -eq 1 ]]; then # si on a un paramettre
     fi
   elif [[ ! ( -e $RacineB/.synchro) && -e $RacineA  ]]; then # si pas de fichier .synchro et que la RacineA pointe vers quelque chose
     echo $DirPath > $RacineB.Config
-    echo "" > $RacineB.synchro
+    rm $RacineB.synchro
     "$(dirname $0)"/Main "$DirPath" "$RacineB" "" 0
   fi
 
@@ -50,7 +50,7 @@ elif [[ $# -eq 0 ]]; then #si pas de paramettre passé
       if [[ $rep = 'y' ]]; then # si reponse est oui
         rm -rf $RacineB* #supprime l'ancienne synchonisation
         echo $DirPath > $RacineB.Config #ecrit le fichier .Config
-        echo "" > $RacineB.synchro #reset le fichier .synchro
+        rm $RacineB.synchro #reset le fichier .synchro
         "$(dirname $0)"/Main "$DirPath" "$RacineB" "" 0
       fi
     else
@@ -63,7 +63,7 @@ elif [[ $# -eq 0 ]]; then #si pas de paramettre passé
     read rep
     if [[ $rep = 'y' ]]; then # si reponse est oui
       echo $DirPath > $RacineB.Config #ecrit le fichier .Config
-      echo "" > $RacineB.synchro #reset le fichier .synchro
+      rm $RacineB.synchro #reset le fichier .synchro
       "$(dirname $0)"/Main "$DirPath" "$RacineB" "" 0
     fi
   fi
