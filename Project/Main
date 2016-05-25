@@ -1,7 +1,25 @@
 #!/bin/bash
 
-# probleme sur condition dans TestSynchro
+function Sup {
+  #$1 RacineA
+  #$2 chemin
+  #$3 Fichier/directory à supprimer
+  #$4 RacineB/.synchro
 
+  echo ""
+  echo -e "\e[4mSup\e[0m"
+  echo -e "\e[1mRacineA:\e[0m $1"
+  echo -e "\e[1mChemin:\e[0m $2"
+  echo -e "\e[1mFichier à supprimer:\e[0m $3"
+  echo ""
+
+  rm -rfv $3
+
+  egrep -v '^\$1 \$2.*$' $4 > ~/.temp
+
+  cp ~/.temp $4
+  rm -r ~/.temp
+}
 
 function MAJ {
   #$1 RacineA
@@ -41,16 +59,89 @@ function TestSynchro {
   echo -e "\e[1mRacineA:\e[0m $1"
   echo -e "\e[1mRacineB:\e[0m $2"
   echo -e "\e[1mChemin:\e[0m $3"
-  echo -e "\e[1mExiste à racineA:\e[0m $(test -e "$1$3" | echo $?)"
-  echo -e "\e[1mExiste à racineB:\e[0m $(test -e $2"$(basename $1)"/$3 | echo $?)"
-  echo -e "\e[1mTest grep:\e[0m $(test -z "$(egrep '^\$1 \$3 .+$' $2.synchro)" | echo $?)"
 
-  if ! ( egrep -q '^\$1 \$3 .+$' $2.synchro ) ; then
-    echo zafhs
-  fi
+  line=$(egrep "^$1 $3/? .*$" $2.synchro)
+  echo -e "\e[1mGrep .synchro:\e[0m $line"
 
-  if test -e $1$3 && ! (test -e "$2$(basename $1)/$3" ) && ! ( egrep -q '^\$1 \$3 .+$' $2.synchro ) ; then #si est dans RacineA, pas dans RacineB et dans le .synchro
-    MAJ "$1" "$1$3" "$2$3" 1 "$2.synchro"
+
+  if [[ -e "$1$3" && ! ( -e "$2$(basename "$1")/$3" ) ]]  ; then #si est dans RacineA, pas dans RacineB
+    if [[ -z $line ]]; then #pas dans le .synchro
+      #copie colle le fichier/directory avec ecriture
+      echo "MAJB"
+      MAJ "$1" "$1$3" "$2$3" 1 "$2.synchro"
+    else # dans le point synchro
+      #supprime le fichier/dossier et la ligne du .synchro
+      echo "supprimeA"
+      Sup "$1" "$3" "$1$3" "$2.synchro"
+    fi
+
+  elif [[ ! ( -e "$1$3" ) &&  -e "$2$(basename "$1")/$3" ]]; then #si est dans RacineB, pas dans RacineA
+    if [[ -z $line ]]; then #pas dans le .synchro
+      echo "MAJA"
+      MAJ "$1" "$2$3" "$1$3" 1 "$2.synchro"
+    else
+      echo "supprimeB"
+      Sup "$1" "$3" "$2$(basename "$1")/$3" "$2.synchro"
+    fi
+
+  elif [[ -d "$1$3" && -d "$2$(basename "$1")/$3" && -n $line ]] ; then #si directory present dans les deux racine et dans le journal
+    #recursive
+    echo "recur"
+    "$(dirname $0)"/Main "$RacineA" "$RacineB" "$3/" "$(expr $4 + 1 )"
+
+  elif [[ -f "$1$3" && -f "$2$(basename "$1")/$3" && -n $line ]]; then #si fichier présent dans les deux racine et dans le journal
+    echo "meta"
+
+    Jperm=$(cut -f 3 -d ' ' <<< "$line")
+    Jmodif=$(cut -f 4 -d ' ' <<< "$line")
+    Jsize=$(cut -f 5 -d ' ' <<< "$line")
+    Jidgroup=$(cut -f 6 -d ' ' <<< "$line")
+    Jidowner=$(cut -f 7 -d ' ' <<< "$line")
+    # Jperm=$(sed "s|^${1} ${3} \([0-9]\{3\}\).*|\1|" <<< $line )
+    # Jmodif=$(sed "s|^${1} ${3} [0-9]\{3\} \([^ ]*\).*|\1|" <<< $line )
+    # Jsize=$(sed "s|^${1} ${3} [0-9]\{3\} [^ ]* \([^ ]*\).*|\1|" <<< $line )
+    # Jidgroup=$(sed "s|^${1} ${3} [0-9]\{3\} [^ ]* [^ ]* \([^ ]*\).*|\1|" <<< $line )
+    # Jidowner=$(sed "s|^${1} ${3} [0-9]\{3\} [^ ]* [^ ]* [^ ]* \([^ ]*\).*|\1|" <<< $line )
+
+    echo $Jperm
+    echo $Jmodif
+    echo $Jsize
+    echo $Jidgroup
+    echo $Jidowner
+    #faire different test sur les metadonnée
+    if [[ $(stat -c "%a" "$1$3") -eq $Jperm && $(stat -c "%a" "$2$(basename "$1")/$3") -ne $Jperm ]]; then #si permission fichier racineA est comme le journal mais pas racineB
+        #change permission
+        echo "permissionB"
+    elif [[ $(stat -c "%Y" "$1$3") -eq $Jmodif && $(stat -c "%Y" "$2$(basename "$1")/$3") -ne $Jmodif ]]; then #si permission fichier racineA est comme le journal pas racineB
+      echo "modificationB"
+
+    # elif [[ $(stat -c "%s" "$1$3") -ne $Jsize && $(stat -c "%s" "$2$(basename "$1")/$3") -ne $Jsize ]]; then #si taille racineA et racineB non conforme au journal.
+    #   echo "size conflitB"
+
+    elif [[ $(stat -c "%g" "$1$3") -eq $Jidgroup && $(stat -c "%g" "$2$(basename "$1")/$3") -ne $Jidgroup ]]; then
+      #si groupe owner racineA egale au journal et pas racineB
+      echo "idgroupB"
+
+    elif [[ $(stat -c "%u" "$1$3") -eq $Jidowner && $(stat -c "%u" "$2$(basename "$1")/$3") -ne $Jidowner ]]; then #si owner racineA egale au journal et pas racineB
+      echo "idownerB"
+
+    elif [[ $(stat -c "%Y" "$1$3") -ne $Jmodif && $(stat -c "%Y" "$2$(basename "$1")/$3") -eq $Jmodif ]]; then #si permission fichier racineB est comme le journal pas racineA
+      echo "modificationA"
+
+    elif [[ $(stat -c "%a" "$1$3") -eq $Jperm && $(stat -c "%a" "$2$(basename "$1")/$3") -ne $Jperm ]]; then #si permission fichier racineB est comme le journal mais pas racineA
+        #change permission
+      echo "permissionA"
+
+    elif [[ $(stat -c "%g" "$1$3") -ne $Jidgroup && $(stat -c "%g" "$2$(basename "$1")/$3") -eq $Jidgroup ]]; then #si groupe owner racineB egale au journal et pas racineA
+      echo "idgroupA"
+
+    elif [[ $(stat -c "%u" "$1$3") -ne $Jidowner && $(stat -c "%u" "$2$(basename "$1")/$3") -eq $Jidowner ]]; then #si owner racineB egale au journal et pas racineA
+      echo "idownerB"
+    else
+      echo "good"
+    fi
+  else
+    echo "conflit"
   fi
 }
 
@@ -70,8 +161,14 @@ echo -e "\e[4mMain\e[0m"
 echo -e "\e[1mRacineA:\e[0m $RacineA"
 echo -e "\e[1mRacineB:\e[0m $RacineB"
 echo -e "\e[1mChemin:\e[0m $Chemin"
+echo -e "\e[1mNbrecur:\e[0m $NbRecur"
 
-TestSynchro "$RacineA" "$RacineB" "$Chemin$fichier" "$NbRecur"
+# TestSynchro "$RacineA" "$RacineB" "$Chemin$fichier" "$NbRecur"
+if [[ $NbRecur -eq 0 ]]; then
+  if [[ -d $RacineA$Chemin && -z $(egrep "^$RacineA $Chemin/? .*$" $RacineB.synchro) ]]; then
+    MAJ "$RacineA" "$RacineA$Chemin" "$RacineB$Chemin" 1 "$RacineB.synchro"
+  fi
+fi
 
 for fichier in $(ls $RacineA$Chemin); do
   TestSynchro "$RacineA" "$RacineB" "$Chemin$fichier" "$NbRecur"
@@ -83,7 +180,7 @@ for fichier in $(ls $RacineB"$(basename $RacineA)"/$Chemin); do
   #test B avec J
   echo "hello"
 done
-if [[ $5 -eq 0 ]]; then
+if [[ $4 -eq 0 ]]; then
   #test J pour ligne en trop
   echo ----------------------------------------------------------------
   echo FIN
