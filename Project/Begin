@@ -22,21 +22,20 @@ if [[ $# -eq 1 ]]; then # si on a un paramettre
   if [[ -e $RacineB/.synchro && -e $RacineA ]]; then #si le fichier .synchro existe et si RacineA pointe vers quelque chose
     if [[ -z `find $RacineB -name $DirectoryRacine` ]]; then #si il ne trouve pas le directory dans la racineB
       rm -rf $RacineB* #supprime l'ancienne synchonisation
-      cp -rv $DirPath $RacineB #copie colle le dossier (a enlever)
       echo $DirPath > $RacineB.Config #ecrit le fichier .Config
-      rm $RacineB.synchro #reset le fichier .synchro
-      "$(dirname $0)"/Main "$DirPath" "$RacineB" "" 0
+      rm $RacineB.synchro 2> /dev/null #reset le fichier .synchro
+      "$(dirname $0)"/Main "$DirPath" "$RacineB" ""
     else
       RacineA=$(head -n 1 $RacineB.Config)
       Chemin=$(sed "s|${RacineA}||" <<< "$DirPath")
       echo $RacineA
       echo $Chemin
-      "$(dirname $0)"/Main "$RacineA" "$RacineB" "$Chemin" 0
+      "$(dirname $0)"/Main "$RacineA" "$RacineB" "$Chemin"
     fi
   elif [[ ! ( -e $RacineB/.synchro) && -e $RacineA  ]]; then # si pas de fichier .synchro et que la RacineA pointe vers quelque chose
     echo $DirPath > $RacineB.Config
-    rm $RacineB.synchro
-    "$(dirname $0)"/Main "$DirPath" "$RacineB" "" 0
+    rm $RacineB.synchro 2> /dev/null
+    "$(dirname $0)"/Main "$DirPath" "$RacineB" ""
   fi
 
 elif [[ $# -eq 0 ]]; then #si pas de paramettre passé
@@ -50,11 +49,11 @@ elif [[ $# -eq 0 ]]; then #si pas de paramettre passé
       if [[ $rep = 'y' ]]; then # si reponse est oui
         rm -rf $RacineB* #supprime l'ancienne synchonisation
         echo $DirPath > $RacineB.Config #ecrit le fichier .Config
-        rm $RacineB.synchro #reset le fichier .synchro
-        "$(dirname $0)"/Main "$DirPath" "$RacineB" "" 0
+        rm $RacineB.synchro 2> /dev/null #reset le fichier .synchro
+        "$(dirname $0)"/Main "$DirPath" "$RacineB" ""
       fi
     else
-      "$(dirname $0)"/Main "$RacineA" "$RacineB" "" 0
+      "$(dirname $0)"/Main "$RacineA" "$RacineB" ""
     fi
   else #Si le fichier .Config n'existe pas
     DirPath=$(pwd)/
@@ -63,8 +62,8 @@ elif [[ $# -eq 0 ]]; then #si pas de paramettre passé
     read rep
     if [[ $rep = 'y' ]]; then # si reponse est oui
       echo $DirPath > $RacineB.Config #ecrit le fichier .Config
-      rm $RacineB.synchro #reset le fichier .synchro
-      "$(dirname $0)"/Main "$DirPath" "$RacineB" "" 0
+      rm $RacineB.synchro 2> /dev/null #reset le fichier .synchro
+      "$(dirname $0)"/Main "$DirPath" "$RacineB" ""
     fi
   fi
 
