@@ -78,8 +78,8 @@ BOUT DE CODE UTILE
 Print octal right : stat -c "%a" FILE
 Print modification date : stat -c "%Y" FILE
 print size in bits : stat -c "%s" FILE
-print ID of group : stat -c "%g" FILE
-print ID of owner : stat -c "%u" FILE
+print ID of group : stat -c "%G" FILE
+print ID of owner : stat -c "%U" FILE
 
 
 ALGO DEPART cas RacineB fixe
