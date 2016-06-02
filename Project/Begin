@@ -19,23 +19,27 @@ if [[ $# -eq 1 ]]; then # si on a un paramettre
   else # si RacineA ne pointe pas vers un fichier ou un directory
     echo "$RacineA n'existe pas"
   fi
-  if [[ -e $RacineB/.synchro && -e $RacineA ]]; then #si le fichier .synchro existe et si RacineA pointe vers quelque chose
+  if [[ -e $RacineB.synchro && -e $RacineA ]]; then #si le fichier .synchro existe et si RacineA pointe vers quelque chose
     if [[ -z `find $RacineB -name $DirectoryRacine` ]]; then #si il ne trouve pas le directory dans la racineB
       rm -rf $RacineB* #supprime l'ancienne synchonisation
       echo $DirPath > $RacineB.Config #ecrit le fichier .Config
-      rm $RacineB.synchro 2> /dev/null #reset le fichier .synchro
-      "$(dirname $0)"/Main "$DirPath" "$RacineB" ""
+      if [[ -e $RacineB.synchro ]]; then
+        rm $RacineB.synchro #reset le fichier .synchro
+      fi
+      "$(dirname $0)"/Main "$DirPath" "$RacineB" "" 0
     else
       RacineA=$(head -n 1 $RacineB.Config)
       Chemin=$(sed "s|${RacineA}||" <<< "$DirPath")
       echo $RacineA
       echo $Chemin
-      "$(dirname $0)"/Main "$RacineA" "$RacineB" "$Chemin"
+      "$(dirname $0)"/Main "$RacineA" "$RacineB" "$Chemin" 0
     fi
   elif [[ ! ( -e $RacineB/.synchro) && -e $RacineA  ]]; then # si pas de fichier .synchro et que la RacineA pointe vers quelque chose
     echo $DirPath > $RacineB.Config
-    rm $RacineB.synchro 2> /dev/null
-    "$(dirname $0)"/Main "$DirPath" "$RacineB" ""
+    if [[ -e $RacineB.synchro ]]; then
+      rm $RacineB.synchro #reset le fichier .synchro
+    fi
+    "$(dirname $0)"/Main "$DirPath" "$RacineB" "" 0
   fi
 
 elif [[ $# -eq 0 ]]; then #si pas de paramettre passé
@@ -47,13 +51,17 @@ elif [[ $# -eq 0 ]]; then #si pas de paramettre passé
       echo -e "\e[1mATTENTION:\e[0m vous allez ecraser votre ancienne synchronisation de Racine: \e[1m$RacineA\e[0m par \e[1m$DirPath\e[0m. \e[1m[y/N]:\e[0m "
       read rep
       if [[ $rep = 'y' ]]; then # si reponse est oui
-        rm -rf $RacineB* #supprime l'ancienne synchonisation
+      if [[ -e $RacineB.synchro ]]; then
+        rm $RacineB.synchro #reset le fichier .synchro
+      fi
         echo $DirPath > $RacineB.Config #ecrit le fichier .Config
-        rm $RacineB.synchro 2> /dev/null #reset le fichier .synchro
-        "$(dirname $0)"/Main "$DirPath" "$RacineB" ""
+        if [[ -e $RacineB.synchro ]]; then
+          rm $RacineB.synchro #reset le fichier .synchro
+        fi
+        "$(dirname $0)"/Main "$DirPath" "$RacineB" "" 0
       fi
     else
-      "$(dirname $0)"/Main "$RacineA" "$RacineB" ""
+      "$(dirname $0)"/Main "$RacineA" "$RacineB" "" 0
     fi
   else #Si le fichier .Config n'existe pas
     DirPath=$(pwd)/
@@ -62,8 +70,10 @@ elif [[ $# -eq 0 ]]; then #si pas de paramettre passé
     read rep
     if [[ $rep = 'y' ]]; then # si reponse est oui
       echo $DirPath > $RacineB.Config #ecrit le fichier .Config
-      rm $RacineB.synchro 2> /dev/null #reset le fichier .synchro
-      "$(dirname $0)"/Main "$DirPath" "$RacineB" ""
+      if [[ -e $RacineB.synchro ]]; then
+        rm $RacineB.synchro #reset le fichier .synchro
+      fi
+      "$(dirname $0)"/Main "$DirPath" "$RacineB" "" 0
     fi
   fi
 
