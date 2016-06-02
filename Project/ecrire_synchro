@@ -7,7 +7,7 @@ RacineOrigine=$2
 
 
 for fichier in  $1*; do
-  echo $fichier
+  # echo $fichier
   if [[ -f $fichier ]]; then
     # echo $fichier
     # echo `sed "s|^\(\$RacineOrigine\)\(.*\)$|\1 \2|" <<< "$fichier"`
