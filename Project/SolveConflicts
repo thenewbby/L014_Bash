@@ -30,7 +30,7 @@ if [[ contentDiff -eq 0 ]] ; then
 			fi
 		done < $conFile
 	#else
-	#code pour mettre les balises dans les fichiers
+	#code pour la façon manuelle
 
 	fi
 else
@@ -41,9 +41,37 @@ while read line
 do
 	fileA = "$racineA$line"
 	fileB = "$racineB$(basename $racineA)/$line"
-	if [[ $(stat -c %Y%a%U%G $fileA) -ne $(stat -c %Y%a%U%G $fileB) ]] ; then #si les fichiers sont différents
+	if [[ $(stat -c %Y%a%U%G $fileA) -ne $(stat -c %Y%a%U%G $fileB) ]] ; then #si les metadonnées sont différentes
 		metaDiff=0 #on met un boolean à True
 	fi
 done < $conFile
 
 #use touch for meta data?
+
+if [[ metaDiff -eq 0 ]] ; then
+	echo -e "Des conflits de metadonnées ont été detectés. Voulez vous régler ces conflits automatiquement? (remplacement par les métadonnées les plus récentes)? [y/N]:"
+	read rep
+	if [[ $rep -eq 'y' ]] ; then
+		while read line
+		do
+			fileA = "$racineA$line"
+			fileB = "$racineB$(basename $racineA)/$line"
+			if [[ $(stat -c "%Y" $fileA) -gt $(stat -c "%Y" $fileB) ]] ; then #si le fichier en racine A est plus récent que celui en racine B
+				chmod $(stat -c "%c" $fileA) $fileB
+				chown $(stat -c "%U" $fileA) $fileB
+				touch -t $(date -r $fileA +%y%m%d%H%M.%S) $fileB
+				chgrp $(stat -c "%G" $fileA) $fileB
+			else
+				chmod $(stat -c "%c" $fileB) $fileA
+				chown $(stat -c "%U" $fileB) $fileA
+				touch -t $(date -r $fileB +%y%m%d%H%M.%S) $fileA
+				chgrp $(stat -c "%G" $fileB) $fileA
+			fi
+		done < $conFile
+	#else
+	#code pour la façon manuelle
+
+	fi
+else
+echo "pas de conflit de metadonnées"
+fi
