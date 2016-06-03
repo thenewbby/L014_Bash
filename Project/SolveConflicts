@@ -1,26 +1,26 @@
 #!/bin/bash
 conFile="$2.conflit"
-racineA="$1"
-racineB="$2"
+RacineA="$1"
+RacineB="$2"
 contentDiff=1
 metaDiff=1
 
-function changeMetadata{
-	file1=$1
-	file2=$2
+function changeMetadata {
+	file1="$1"
+	file2="$2"
 
-	chmod $(stat -c "%c" $file1) $file2 #change le mode
-	chown $(stat -c "%U" $file1) $file2 #change le possesseur du fichier
-	touch -t $(date -r $file1 +%y%m%d%H%M.%S) $file2 #change la date de modification
-	chgrp $(stat -c "%G" $file1) $file2 #change le groupe
+	chmod $(stat -c "%a" "$file1") "$file2" #change le mode
+	chown $(stat -c "%U" "$file1") "$file2" #change le possesseur du fichier
+	touch -t $(date -r "$file1" +%y%m%d%H%M.%S) "$file2" #change la date de modification
+	chgrp $(stat -c "%G" "$file1") "$file2" #change le groupe
+	sed -i "s|^\($RacineA $(basename "$file2")\) [0-9]\{3\} \(.*\)$|\1 $(stat -c "%a" "$file1") \2|" $RacineB.synchro #modifie le .synchro
 
 }
 
-
 while read line
 do
-	fileA="$racineA$line"
-	fileB="$racineB$(basename $racineA)/$line"
+	fileA="$RacineA$line"
+	fileB="$RacineB$(basename $RacineA)/$line"
 	if [[ $(diff -q $fileA $fileB) ]] ; then #si les fichiers sont différents
 		contentDiff=0 #on met un boolean à True
 	fi
@@ -33,14 +33,13 @@ if [[ contentDiff -eq 0 ]] ; then
 		echo -e "\e[1mGestion automatique...:\e[0m"
 		while read line
 		do
-			fileA="$racineA$line"
-			fileB="$racineB$(basename $racineA)/$line"
+			fileA="$RacineA$line"
+			fileB="$RacineB$(basename $RacineA)/$line"
 			if [[ $(stat -c "%Y" $fileA) -gt $(stat -c "%Y" $fileB) ]] ; then #si le fichier en racine A est plus récent que celui en racine B
-				echo -e "remplpacement ddu contenu de $fileB par $fileA"
-
+				echo -e "remplacement ddu contenu de $fileB par $fileA"
 				cp --preserve=all $fileA $fileB
 			else
-				echo -e "remplpacement ddu contenu de $fileA par $fileB"
+				echo -e "remplacement ddu contenu de $fileA par $fileB"
 				cp --preserve=all $fileB $fileA
 			fi
 		done < $conFile
@@ -48,27 +47,32 @@ if [[ contentDiff -eq 0 ]] ; then
 	else
 		echo -e "Voulez vous régler ces conflits manuellement ou ignorer les conflits? [y/N]:"
 		read rep
-		if [[ $rep == "y" ]]
+		if [[ $rep == "y" ]]; then
 			echo -e "\e[1mGestion manuelle:\e[0m"
+
+
+
+
+
+
+
 
 		else
 			echo "Conflits ignorés"
 		fi
-else
 	fi
+else
 	echo -e "pas de conflit de contenu"
 fi
 
 while read line
 do
-	fileA="$racineA$line"
-	fileB="$racineB$(basename $racineA)/$line"
-	if [[ $(stat -c %Y%a%U%G $fileA) -ne $(stat -c %Y%a%U%G $fileB) ]] ; then #si les metadonnées sont différentes
+	fileA="$RacineA$line"
+	fileB="$RacineB$(basename $RacineA)/$line"
+	if [[ $(stat -c %Y%a%U%G $fileA) != $(stat -c %Y%a%U%G $fileB) ]] ; then #si les metadonnées sont différentes
 		metaDiff=0 #on met un boolean à True
 	fi
 done < $conFile
-
-#use touch for meta data?
 
 if [[ metaDiff -eq 0 ]] ; then # si difference de metadonnées
 	echo -e "Des conflits de metadonnées ont été detectés. Voulez vous régler ces conflits automatiquement? (remplacement par les métadonnées les plus récentes)? [y/N]:"
@@ -76,20 +80,27 @@ if [[ metaDiff -eq 0 ]] ; then # si difference de metadonnées
 	if [[ $rep -eq 'y' ]] ; then
 		while read line
 		do
-			fileA="$racineA$line"
-			fileB="$racineB$(basename $racineA)/$line"
+			fileA="$RacineA$line"
+			fileB="$RacineB$(basename $RacineA)/$line"
 			if [[ $(stat -c "%Y" $fileA) -gt $(stat -c "%Y" $fileB) ]] ; then #si le fichier en racine A est plus récent que celui en racine B
-				#A FAIRE mettre le journal à jour (test synchro main)
-				echo -e "remplpacement des métadonnées de $fileB par celles de $fileA"
+				echo -e "remplacement des métadonnées de $fileB par celles de $fileA"
 				changeMetadata $fileA $fileB
 			else
-				echo -e "remplpacement des métadonnées de $fileA par celles de $fileB"
+				echo -e "remplacement des métadonnées de $fileA par celles de $fileB"
 				changeMetadata $fileB $fileA
 			fi
 		done < $conFile
-	#else
-	#code pour la façon manuelle
+	else
+		echo -e "\e[1mGestion manuelle:\e[0m"
 
+
+
+
+
+
+
+
+		
 	fi
 else
 echo "pas de conflit de metadonnées"
