@@ -5,6 +5,17 @@ racineB="$2"
 contentDiff=1
 metaDiff=1
 
+function changeMetadata{
+	file1=$1
+	file2=$2
+
+	chmod $(stat -c "%c" $file1) $file2 #change le mode
+	chown $(stat -c "%U" $file1) $file2 #change le possesseur du fichier
+	touch -t $(date -r $file1 +%y%m%d%H%M.%S) $file2 #change la date de modification
+	chgrp $(stat -c "%G" $file1) $file2 #change le groupe
+
+}
+
 
 while read line
 do
@@ -16,25 +27,36 @@ do
 done < $conFile
 
 if [[ contentDiff -eq 0 ]] ; then
-	echo -e "Des conflits de contenu ont été detectés. Voulez vous régler ces conflits automatiquement? (remplacement par le fichier le plus récent)? [y/N]:"
+	echo -e "Des conflits de contenu ont été detectés. Voulez vous régler ces conflits automatiquement? (remplacement par le fichier le plus récent) [y/N]:"
 	read rep
 	if [[ $rep -eq 'y' ]] ; then
+		echo -e "\e[1mGestion automatique...:\e[0m"
 		while read line
 		do
 			fileA = "$racineA$line"
 			fileB = "$racineB$(basename $racineA)/$line"
 			if [[ $(stat -c "%Y" $fileA) -gt $(stat -c "%Y" $fileB) ]] ; then #si le fichier en racine A est plus récent que celui en racine B
+				echo -e "remplpacement ddu contenu de $fileB par $fileA"
+
 				cp --preserve=all $fileA $fileB
 			else
+				echo -e "remplpacement ddu contenu de $fileA par $fileB"
 				cp --preserve=all $fileB $fileA
 			fi
 		done < $conFile
-	#else
-	#code pour la façon manuelle
+		echo -e "remplacement terminé"
+	else
+		echo -e "Voulez vous régler ces conflits manuellement ou ignorer les conflits? [modifier/Ignorer]:"
+		read rep
+		if [[ $rep -eq "modifier" ]]
+			echo -e "\e[1mGestion manuelle:\e[0m"
 
+		else
+			echo "Conflits ignorés"
+		fi
 	fi
 else
-echo "pas de conflit de contenu"
+	echo -e "pas de conflit de contenu"
 fi
 
 while read line
@@ -48,7 +70,7 @@ done < $conFile
 
 #use touch for meta data?
 
-if [[ metaDiff -eq 0 ]] ; then
+if [[ metaDiff -eq 0 ]] ; then # si difference de metadonnées
 	echo -e "Des conflits de metadonnées ont été detectés. Voulez vous régler ces conflits automatiquement? (remplacement par les métadonnées les plus récentes)? [y/N]:"
 	read rep
 	if [[ $rep -eq 'y' ]] ; then
@@ -57,15 +79,12 @@ if [[ metaDiff -eq 0 ]] ; then
 			fileA = "$racineA$line"
 			fileB = "$racineB$(basename $racineA)/$line"
 			if [[ $(stat -c "%Y" $fileA) -gt $(stat -c "%Y" $fileB) ]] ; then #si le fichier en racine A est plus récent que celui en racine B
-				chmod $(stat -c "%c" $fileA) $fileB
-				chown $(stat -c "%U" $fileA) $fileB
-				touch -t $(date -r $fileA +%y%m%d%H%M.%S) $fileB
-				chgrp $(stat -c "%G" $fileA) $fileB
+				#A FAIRE mettre le journal à jour (test synchro main)
+				echo -e "remplpacement des métadonnées de $fileB par celles de $fileA"
+				changeMetadata $fileA $fileB
 			else
-				chmod $(stat -c "%c" $fileB) $fileA
-				chown $(stat -c "%U" $fileB) $fileA
-				touch -t $(date -r $fileB +%y%m%d%H%M.%S) $fileA
-				chgrp $(stat -c "%G" $fileB) $fileA
+				echo -e "remplpacement des métadonnées de $fileA par celles de $fileB"
+				changeMetadata $fileB $fileA
 			fi
 		done < $conFile
 	#else
