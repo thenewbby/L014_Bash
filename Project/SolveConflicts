@@ -19,8 +19,8 @@ function changeMetadata{
 
 while read line
 do
-	fileA = "$racineA$line"
-	fileB = "$racineB$(basename $racineA)/$line"
+	fileA="$racineA$line"
+	fileB="$racineB$(basename $racineA)/$line"
 	if [[ $(diff -q $fileA $fileB) ]] ; then #si les fichiers sont différents
 		contentDiff=0 #on met un boolean à True
 	fi
@@ -33,8 +33,8 @@ if [[ contentDiff -eq 0 ]] ; then
 		echo -e "\e[1mGestion automatique...:\e[0m"
 		while read line
 		do
-			fileA = "$racineA$line"
-			fileB = "$racineB$(basename $racineA)/$line"
+			fileA="$racineA$line"
+			fileB="$racineB$(basename $racineA)/$line"
 			if [[ $(stat -c "%Y" $fileA) -gt $(stat -c "%Y" $fileB) ]] ; then #si le fichier en racine A est plus récent que celui en racine B
 				echo -e "remplpacement ddu contenu de $fileB par $fileA"
 
@@ -54,15 +54,15 @@ if [[ contentDiff -eq 0 ]] ; then
 		else
 			echo "Conflits ignorés"
 		fi
-	fi
 else
+	fi
 	echo -e "pas de conflit de contenu"
 fi
 
 while read line
 do
-	fileA = "$racineA$line"
-	fileB = "$racineB$(basename $racineA)/$line"
+	fileA="$racineA$line"
+	fileB="$racineB$(basename $racineA)/$line"
 	if [[ $(stat -c %Y%a%U%G $fileA) -ne $(stat -c %Y%a%U%G $fileB) ]] ; then #si les metadonnées sont différentes
 		metaDiff=0 #on met un boolean à True
 	fi
@@ -76,8 +76,8 @@ if [[ metaDiff -eq 0 ]] ; then # si difference de metadonnées
 	if [[ $rep -eq 'y' ]] ; then
 		while read line
 		do
-			fileA = "$racineA$line"
-			fileB = "$racineB$(basename $racineA)/$line"
+			fileA="$racineA$line"
+			fileB="$racineB$(basename $racineA)/$line"
 			if [[ $(stat -c "%Y" $fileA) -gt $(stat -c "%Y" $fileB) ]] ; then #si le fichier en racine A est plus récent que celui en racine B
 				#A FAIRE mettre le journal à jour (test synchro main)
 				echo -e "remplpacement des métadonnées de $fileB par celles de $fileA"
