@@ -19,7 +19,7 @@ function TestB {
     # echo ""
 
     # echo $fichier
-    if [[ ! ( -e "$RacineAs$fichier" ) &&  -e "$RacineB$(basename "$RacineA")/$fichier" ]]; then #si est dans RacineB, pas dans RacineA
+    if [[ ! ( -e "$RacineA$fichier" ) &&  -e "$RacineB$(basename "$RacineA")/$fichier" ]]; then #si est dans RacineB, pas dans RacineA
       if [[ -z $line ]]; then
       # echo "MAJA"
         MAJ "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" 1 "$fichier"
