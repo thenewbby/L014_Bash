@@ -29,7 +29,7 @@ done < $conFile
 if [[ contentDiff -eq 0 ]] ; then
 	echo -e "Des conflits de contenu ont été detectés. Voulez vous régler ces conflits automatiquement? (remplacement par le fichier le plus récent) [y/N]:"
 	read rep
-	if [[ $rep -eq 'y' ]] ; then
+	if [[ $rep == 'y' ]] ; then
 		echo -e "\e[1mGestion automatique...:\e[0m"
 		while read line
 		do
@@ -46,9 +46,9 @@ if [[ contentDiff -eq 0 ]] ; then
 		done < $conFile
 		echo -e "remplacement terminé"
 	else
-		echo -e "Voulez vous régler ces conflits manuellement ou ignorer les conflits? [modifier/Ignorer]:"
+		echo -e "Voulez vous régler ces conflits manuellement ou ignorer les conflits? [y/N]:"
 		read rep
-		if [[ $rep -eq "modifier" ]]
+		if [[ $rep == "y" ]]
 			echo -e "\e[1mGestion manuelle:\e[0m"
 
 		else
