@@ -49,7 +49,8 @@ if [[ contentDiff -eq 0 ]] ; then
 		read rep
 		if [[ $rep == "y" ]]; then
 			echo -e "\e[1mGestion manuelle:\e[0m"
-
+			#diff racineA/solve.sh racineB/racineA/solve.sh | grep '^[0-9]' | grep ','
+			#diff racineA/solve.sh racineB/racineA/solve.sh | grep '^[0-9]' | grep -v ','
 
 
 
