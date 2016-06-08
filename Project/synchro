@@ -1,6 +1,26 @@
- #!/bin/bash
+#!/bin/bash
 
-#-------------------------------------------------------------TestB----------------------------------------------------------
+#--------------------------------------------------------------Ecrire Synchro----------------------------------------------------------
+
+function ecrire_synchro {
+
+  # $1 Dossier a "écrire"
+  # $2 RacineA
+  # $3 RacineB/.synchro
+
+  RacineOrigine=$2
+
+  for fichier in  $1*; do
+    if [[ -f $fichier ]]; then
+      echo "`sed "s|^\(\$RacineOrigine\)\(.*\)$|\1 \2|" <<< "$fichier"` `stat -c '%a' $fichier` `stat -c '%Y' $fichier` `stat -c '%s' $fichier` `stat -c '%G' $fichier` `stat -c '%U' $fichier`" >> $3
+    elif [[ -d $fichier ]]; then
+      echo "`sed "s|^\(\$RacineOrigine\)\(.*\/\)$|\1 \2|" <<< "$fichier/"` `stat -c '%a' $fichier/` `stat -c '%Y' $fichier/` `stat -c '%s' $fichier/` `stat -c '%G' $fichier/` `stat -c '%U' $fichier/`" >> $3
+      ecrire_synchro "$fichier"/ "$RacineOrigine" "$3"
+    fi
+  done
+}
+
+#-------------------------------------------------------------TestB---------------------------------------------------------
 function TestB {
 
   # $1 Chemin/
@@ -31,14 +51,14 @@ function TestB {
     elif [[ -d "$RacineA$fichier" && -d "$RacineB$(basename "$RacineA")/$fichier" ]]; then
       echo -e "$inden Vérification du dossier '\e[4m$RacineB$(basename "$RacineA")/$fichier\e[0m'"
       TestB "$1$fichier/"
-     else
+    else
        echo -e "$inden\e[42mfichier\e[0m: '\e[4m$RacineB$(basename "$RacineA")/$fichier\e[0m' verifié"
     fi
   done
   inden=${inden::-2}
 }
 
-#-----------------------------------------------------------supprimer------------------------------------------------------------
+#-----------------------------------------------------------supprimer-------------------------------------------------------
 
 function Sup {
   # $1 chemin
@@ -60,7 +80,7 @@ function Sup {
   # rm -r ~/.temp
 }
 
-#--------------------------------------------------------------Mise à Jour---------------------------------------------------
+#--------------------------------------------------------------Mise à Jour--------------------------------------------------
 
 function MAJ {
   # $1 Fichier/directory à déplacer
@@ -80,11 +100,11 @@ echo -e "$inden\e[1mTransfert:\e[0m de chemin '\e[4m$1\e[0m' à '\e[4m$2\e[0m'"
     if [[ -d $1 ]]; then
       # echo -e "\e[1mDirectory:\e[0m"
       echo "$RacineA" "$4" "`stat -c "%a" $1`" "`stat -c "%Y" $1`" "`stat -c "%s" $1`" "`stat -c "%G" $1`" "`stat -c "%U" $1`" >> $RacineB.synchro
-      "$(dirname $0)"/ecrire_synchro "$RacineA$4" "$RacineA" "$RacineB.synchro"
+      ecrire_synchro "$RacineA$4" "$RacineA" "$RacineB.synchro"
     else
       # echo -e "\e[1mFichier:\e[0m"
       echo "$RacineA" "$4" "`stat -c "%a" $1`" "`stat -c "%Y" $1`" "`stat -c "%s" $1`" "`stat -c "%G" $1`" "`stat -c "%U" $1`" >> $RacineB.synchro
-      fi
+    fi
   fi
 }
 
@@ -128,16 +148,16 @@ function TestSynchro {
     elif [[ -f "$RacineA$fichier" && -f "$RacineB$(basename "$RacineA")/$fichier" && -n $line ]]; then #si fichier présent dans les deux racine et dans le journal
       # echo "meta"
 
-    local  Jperm=$(cut -f 3 -d ' ' <<< "$line")
-    local  Jmodif=$(cut -f 4 -d ' ' <<< "$line")
-    local  Jsize=$(cut -f 5 -d ' ' <<< "$line")
-    local  Jidgroup=$(cut -f 6 -d ' ' <<< "$line")
-    local  Jidowner=$(cut -f 7 -d ' ' <<< "$line")
-    # Jperm=$(sed "s|^$RacineA ${3}$fichier \([0-9]\{3\}\).*|\1|" <<< $line )
-    # Jmodif=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} \([^ ]*\).*|\1|" <<< $line )
-    # Jsize=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} [^ ]* \([^ ]*\).*|\1|" <<< $line )
-    # Jidgroup=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} [^ ]* [^ ]* \([^ ]*\).*|\1|" <<< $line )
-    # Jidowner=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} [^ ]* [^ ]* [^ ]* \([^ ]*\).*|\1|" <<< $line )
+      local  Jperm=$(cut -f 3 -d ' ' <<< "$line")
+      local  Jmodif=$(cut -f 4 -d ' ' <<< "$line")
+      local  Jsize=$(cut -f 5 -d ' ' <<< "$line")
+      local  Jidgroup=$(cut -f 6 -d ' ' <<< "$line")
+      local  Jidowner=$(cut -f 7 -d ' ' <<< "$line")
+      # Jperm=$(sed "s|^$RacineA ${3}$fichier \([0-9]\{3\}\).*|\1|" <<< $line )
+      # Jmodif=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} \([^ ]*\).*|\1|" <<< $line )
+      # Jsize=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} [^ ]* \([^ ]*\).*|\1|" <<< $line )
+      # Jidgroup=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} [^ ]* [^ ]* \([^ ]*\).*|\1|" <<< $line )
+      # Jidowner=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} [^ ]* [^ ]* [^ ]* \([^ ]*\).*|\1|" <<< $line )
 
       # echo $Jperm
       # echo $Jmodif
@@ -243,21 +263,128 @@ function TestSynchro {
   inden=${inden::-2}
 }
 
-#----------------------------------------------Main----------------------------------------------------------------------------
-# $1 RacineA/
-# $2 RacineB/
-# $3 Chemin/
+#----------------------------------------------Main BEGIN-------------------------------------------------------------------
 
-RacineA=$1
-RacineB=$2
-Chemin=$3
+# $1 RacineA
+
+RacineB=~/racineB/
+Chemin=""
+echo ""
+
+if [[ $# -eq 0 || $# -eq 1 ]]; then
+  if [[ ! ( -d $RacineB ) ]]; then #Si le fichier ~/racineB n'existe pas, on le créer.
+    mkdir $RacineB
+  fi
+fi
 
 
-# echo ""
-# echo -e "\e[4mMain\e[0m"
-# echo -e "\e[1mRacineA:\e[0m $RacineA"
-# echo -e "\e[1mRacineB:\e[0m $RacineB"
-# echo -e "\e[1mChemin:\e[0m $Chemin"
+if [[ $# -eq 1 || $# -eq 2 ]]; then
+
+  RacineA=$1
+  if [[ -d $RacineA ]]; then # si RacineA pointe vers un directory
+    DirPath=$RacineA
+    DirectoryRacineA=$(basename $RacineA)
+  elif [[ -f $RacineA ]]; then # si RacineA pointe vers un fichier
+    DirPath=$(dirname $RacineA)/
+    DirectoryRacineA=$(basename -- "$(dirname -- "$RacineA")")
+  else # si RacineA ne pointe pas vers un fichier ou un directory
+    echo -e "'\e[4m$RacineA\e[0m' n'existe pas."
+    exit 1
+  fi
+  # if [[ $# -eq 2 ]]; then
+  #
+  #   RacineB=$2
+  #   if [[ -d $RacineB ]]; then # si RacineA pointe vers un directory
+  #     DirectoryRacineB=$(basename $RacineB)
+  #   elif [[ -f $RacineB ]]; then # si RacineA pointe vers un fichier
+  #     RacineB=$(dirname $RacineB)/
+  #     DirectoryRacineB=$(basename -- "$(dirname -- "$RacineB")")
+  #   else # si RacineA ne pointe pas vers un fichier ou un directory
+  #     echo -e "'\e[4m$RacineB\e[0m' n'existe pas."
+  #     echo -e "Voulez-vous le créer un dossier '\e[4m$RacineB\e[0m \e[1m[Y/n]:\e[0m"
+  #     read rep
+  #     if [[ $rep = 'n' ]]; then
+  #       exit 1
+  #     fi
+  #     mkdir -p $RacineB
+  #   fi
+  # fi
+
+  if [[ -e $RacineB.synchro ]]; then #si le fichier .synchro existe et si RacineA pointe vers quelque chose
+    if [[ -z `find $RacineB -name $DirectoryRacineA` ]]; then #si il ne trouve pas le directory dans la racineB
+      rm -rf $RacineB* #supprime l'ancienne synchonisation
+      echo $DirPath > $RacineB.Config #ecrit le fichier .Config
+      if [[ -e $RacineB.synchro ]]; then
+        rm $RacineB.synchro #reset le fichier .synchro
+        rm $RacineB.log #reset le fichier .log
+      fi
+      RacineA=$DirPath
+      # "$(dirname $0)"/Main "$DirPath" "$RacineB" ""
+    else
+      RacineA=$(head -n 1 $RacineB.Config)
+      Chemin=$(sed "s|${RacineA}||" <<< "$DirPath")
+      # echo $RacineA
+      # echo $Chemin
+      #"$(dirname $0)"/Main "$RacineA" "$RacineB" "$Chemin"
+    fi
+  elif [[ ! ( -e $RacineB/.synchro) ]]; then # si pas de fichier .synchro et que la RacineA pointe vers quelque chose
+    echo $DirPath > $RacineB.Config
+    if [[ -e $RacineB.synchro ]]; then
+      rm $RacineB.synchro #reset le fichier .synchro
+      rm $RacineB.log #reset le fichier .log
+    fi
+    RacineA=$DirPath
+    # "$(dirname $0)"/Main "$DirPath" "$RacineB" ""
+  fi
+
+elif [[ $# -eq 0 ]]; then #si pas de paramettre passé
+
+  if [[ -e $RacineB.Config ]]; then #si le fichier .Config existe
+    RacineA=$(head -n 1 $RacineB.Config)
+    DirPath=$(pwd)/
+    DirectoryRacineA=$(basename "$(pwd)")
+    if [[ -z `find $RacineB -name $DirectoryRacineA` ]]; then #si il ne trouve pas le directory dans la racineB
+        echo -e "\e[1mATTENTION:\e[0m vous allez ecraser votre ancienne synchronisation de Racine: '\e[4m$RacineA\e[0m' par \e[4m$DirPath\e[0m'. \e[1m[y/N]:\e[0m "
+      read rep
+      if [[ $rep = 'y' ]]; then # si reponse est oui
+        echo $DirPath > $RacineB.Config #ecrit le fichier .Config
+        if [[ -e $RacineB.synchro ]]; then
+          rm $RacineB.synchro #reset le fichier .synchro
+          rm $RacineB.log #reset le fichier .log
+        fi
+        RacineA=$DirPath
+        #"$(dirname $0)"/Main "$DirPath" "$RacineB" ""
+      fi
+    #else
+    #  "$(dirname $0)"/Main "$RacineA" "$RacineB" ""
+    fi
+  else #Si le fichier .Config n'existe pas
+    DirPath=$(pwd)/
+    echo -e "\e[1mPas de parametre ni de fichier '\e[4m.Config\e[0m': vous n'avez pas commencé de synchonisation\e[0m"
+    echo -e "Voulez vous faire une synchronisation à la racine '\e[4m$DirPath\e[0m'. \e[1m[y/N]:\e[0m"
+    read rep
+    if [[ $rep = 'y' ]]; then # si reponse est oui
+      echo $DirPath > $RacineB.Config #ecrit le fichier .Config
+      if [[ -e $RacineB.synchro ]]; then
+        rm $RacineB.synchro #reset le fichier .synchro
+        rm $RacineB.log  #reset le fichier .log
+      fi
+      RacineA=$DirPath
+      #"$(dirname $0)"/Main "$DirPath" "$RacineB" ""
+    fi
+  fi
+
+else # si plus de deux parametre
+
+  echo -e "\e[1mUsage\e[0m: trop de paramettre passés."
+  exit 2
+fi
+
+# "$(dirname $0)"/Main "$RacineA" "$RacineB" "$Chemin"
+
+#----------------------------------------------Main-------------------------------------------------------------------------
+
+
 echo ----------"$(date)"---------- >> $RacineB.log
 echo "" >> $RacineB.log
 
@@ -274,13 +401,13 @@ fi
 
 inden=""
 
-TestSynchro "$Chemin" "0"
+TestSynchro "$Chemin"
 
 echo -e "\n\e[7mScan de RacineB\e[0m\n"
 
 inden=""
 
-TestB "$Chemin" "0"
+TestB "$Chemin"
 
 # echo -e "\n\e[7mFIN boucle B\e[0m\n"
 
