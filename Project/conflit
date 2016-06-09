@@ -47,11 +47,18 @@ while read -u 9 line; do
       if [[ $error -eq 0 ]]; then
         if [[ true ]]; then #fichier egale
           print
+          cat<<EOF
+1) Option 1
+2) Option 2
+3) Option 3
+4) Quit
+EOF
         else
           break
         fi
       fi
     done
+    clear
 done 9< $conFile
 
 echo fin

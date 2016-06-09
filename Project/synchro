@@ -354,6 +354,8 @@ elif [[ $# -eq 0 ]]; then #si pas de paramettre passé
         fi
         RacineA=$DirPath
         #"$(dirname $0)"/Main "$DirPath" "$RacineB" ""
+      else
+        exit 0
       fi
     #else
     #  "$(dirname $0)"/Main "$RacineA" "$RacineB" ""
@@ -371,6 +373,8 @@ elif [[ $# -eq 0 ]]; then #si pas de paramettre passé
       fi
       RacineA=$DirPath
       #"$(dirname $0)"/Main "$DirPath" "$RacineB" ""
+    else
+      exit 0
     fi
   fi
 
@@ -436,4 +440,7 @@ awk ' BEGIN {FS=" "}
 echo ""
 printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
 echo "FIN SYNCHONISATION"
+
+"$(dirname $0)"/conflit "$RacineA" "$RacineB"
+
 echo "" >> $RacineB.log
