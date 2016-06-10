@@ -26,7 +26,7 @@ do
 	fi
 done < $conFile
 
-if [[ contentDiff -eq 0 ]] ; then
+if [[ $contentDiff -eq 0 ]] ; then
 	echo -e "Des conflits de contenu ont été detectés. Voulez vous régler ces conflits automatiquement? (remplacement par le fichier le plus récent) [y/N]:"
 	read rep
 	if [[ $rep == 'y' ]] ; then
@@ -70,9 +70,9 @@ if [[ contentDiff -eq 0 ]] ; then
 					modType=$(sed 's|[0-9]*,*[0-9]*\([a-z]\)[0-9]*,*[0-9]*|\1|' <<< "$fileLine")
 					echo "-----------------------------MODIFICATION TYPE----------------------------"
 					echo $modType
-					if [[ modType="c" ]] ; then
+					if [[ $modType = "c" ]] ; then
 						mod="un changement"
-					elif [[ modType="d" ]]; then
+					elif [[ $modType = "d" ]]; then
 						mod="une suppression"
 					else
 						mod="un ajout"
@@ -199,10 +199,10 @@ do
 	fi
 done < $conFile
 
-if [[ metaDiff -eq 0 ]] ; then # si difference de metadonnées
+if [[ $metaDiff -eq 0 ]] ; then # si difference de metadonnées
 	echo -e "Des conflits de metadonnées ont été detectés. Voulez vous régler ces conflits automatiquement? (remplacement par les métadonnées les plus récentes)? [y/N]:"
 	read rep
-	if [[ $rep -eq 'y' ]] ; then
+	if [[ $rep = 'y' ]] ; then
 		while read line
 		do
 			fileA="$RacineA$line"
