@@ -42,21 +42,145 @@ if [[ contentDiff -eq 0 ]] ; then
 				echo -e "remplacement ddu contenu de $fileA par $fileB"
 				cp --preserve=all $fileB $fileA
 			fi
-		done < $conFile
+		done < "$conFile"
 		echo -e "remplacement terminé"
 	else
 		echo -e "Voulez vous régler ces conflits manuellement ou ignorer les conflits? [y/N]:"
 		read rep
 		if [[ $rep == "y" ]]; then
+			clear
 			echo -e "\e[1mGestion manuelle:\e[0m"
 			#diff racineA/solve.sh racineB/racineA/solve.sh | grep '^[0-9]' | grep ','
 			#diff racineA/solve.sh racineB/racineA/solve.sh | grep '^[0-9]' | grep -v ','
+			#diff output: XX ,XXletterXX, XX
+			#           line begin in file 1, line ending in file1 type of change line begin in file 2, line ending in file2
+			while read -u 3 line
+			do
+				fileA="$RacineA$line"
+				fileB="$RacineB$(basename $RacineA)/$line"
+				#fileDiff=$(diff "$fileA" "$fileB" | grep '^[0-9]')
+				fileLine=$(diff --speed-large-files "$fileA" "$fileB" | grep '^[0-9]' | head -n 1)
+				while [[ -n "$fileLine" ]]
+				do
+
+					echo "-------------------------------DIFF RESULTS-------------------------------"
+					diff "$fileA" "$fileB" | grep '^[0-9]'
+					echo "-------------line--------------"
+					echo $fileLine
+					modType=$(sed 's|[0-9]*,*[0-9]*\([a-z]\)[0-9]*,*[0-9]*|\1|' <<< "$fileLine")
+					echo "-----------------------------MODIFICATION TYPE----------------------------"
+					echo $modType
+					if [[ modType="c" ]] ; then
+						mod="un changement"
+					elif [[ modType="d" ]]; then
+						mod="une suppression"
+					else
+						mod="un ajout"
+					fi
+
+						if [[ -z $(sed 's|[0-9]*,.*,[0-9]*||' <<< "$fileLine") ]] ; then
+						
+						debModA=$(sed 's|\([0-9]*\),.*|\1|' <<< "$fileLine")
+						finModA=$(sed 's|^.*,\([0-9]*\)[a-z].*|\1|' <<< "$fileLine")
+						debModB=$(sed 's|.*[a-z]\([0-9]*\),.*|\1|' <<< "$fileLine")
+						finModB=$(sed 's|.*[a-z][0-9]*,\([0-9]*\)|\1|' <<< "$fileLine")
+
+					elif [[ -z $(sed 's|[0-9]*,[0-9]*[a-z][0-9]*||' <<< "$fileLine") ]] ; then
+
+						debModA=$(sed 's|\([0-9]*\),.*|\1|' <<< "$fileLine")
+						finModA=$(sed 's|^.*,\([0-9]*\)[a-z].*|\1|' <<< "$fileLine")
+						debModB=$(sed 's|.*[a-z]\([0-9]*\)|\1|' <<< "$fileLine")
+						finModB=$debModB
+
+					elif [[ -z $(sed 's|[0-9]*[a-z][0-9]*,[0-9]*||' <<< "$fileLine") ]]; then
+
+						debModA=$(sed 's|\([0-9]*\)[a-z].*|\1|' <<< "$fileLine")
+						finModA=$debModA
+						debModB=$(sed 's|.*[a-z]\([0-9]*\),.*|\1|' <<< "$fileLine")
+						finModB=$(sed 's|.*[a-z][0-9]*,\([0-9]*\)|\1|' <<< "$fileLine")
 
 
+					elif [[ -z $(sed 's|[0-9]*[a-z][0-9]*||' <<< "$fileLine") ]]; then
 
+						debModA=$(sed 's|\([0-9]*\)[a-z].*|\1|' <<< "$fileLine")
+						finModA=$debModA
+						debModB=$(sed 's|.*[a-z]\([0-9]*\)|\1|' <<< "$fileLine")
+						finModB=$debModB
 
+					fi
+					splitFileA=$(head -n "$finModA" "$fileA" | tail -n $((finModA-debModA+1)))
+					splitFileB=$(head -n "$finModB" "$fileB" | tail -n $((finModB-debModB+1)))	
+					echo "debModA: |$debModA|"
+					echo "finModA: |$finModA|"
+					echo "debModB: |$debModB|"
+					echo "finModB: |$finModB|"
+					echo "il y a $mod entre le fichier $fileB et le fichier $fileA:"
+					echo "."
+					echo "-------------$fileA:"
+					echo -e "$splitFileA"
+					echo "."
+					echo "$fileB:"
+					echo "HEAD FILE"
+					head -n $((debModB-1)) "$fileB"
+					echo "SPLIT FILE"
+					echo -e "$splitFileA"
+					#echo "TAIL FILE"
+					#tail -n "+$((finModB+1))" "$fileB"
+					echo '.'
+					echo "Que voulez-vous faire? "
+					echo "."
 
-
+					options=("Contenu de $fileA dans $fileB" "Contenu de $fileB dans $fileA" "Ignorer")
+					select opt in "${options[@]}"; do
+						error=0
+						case $opt in
+						"Contenu de $fileA dans $fileB")
+							echo "==================$fileA IN $fileB====================="
+							echo "$fileB:"
+							echo "HEAD FILE"
+							head -n $((debModB-1)) "$fileB"
+							echo "SPLIT FILE"
+							echo "$splitFileA"
+							#echo "TAIL FILE"
+							#tail -n "+$((finModB+1))" "$fileB"
+							cat "$fileB" > "$RacineB.temp"
+							fileSize=$(wc -l $RacineB.temp | sed 's|\(^[0-9]*\) .*|\1|')
+							echo "---------------file size in number of lines"
+							echo $fileSize
+							head -n $((debModB-1)) "$RacineB.temp" > "$fileB"
+							echo "------------Head File"
+							cat "$fileB"
+							echo "$splitFileA" >> "$fileB"
+							nubrLine=$(bc <<< $fileSize-$finModB+1)
+							echo "NOMBRE LIGNES TAIL"
+							echo $nubrLine
+							echo $((finModB))
+							tail -n "+$((finModB+1))" "$RacineB.temp" >> "$fileB" #ici ça merde, POURQUOI??????
+							#echo "you chose choice 1"
+							;;
+						"Contenu de $fileB dans $fileA")
+							cat "$fileA" > "$RacineB.temp"
+							fileSize=$(wc -l $RacineB.temp)
+							head -n $((debModA-1)) "$RacineB.temp" > "$fileA"
+							echo "$splitFileB" >> "$fileA"
+							tail -n "$((fileSize-finModA))" "$RacineB.temp" >> "$fileA"
+							#echo "you chose choice 2"
+							;;
+						"Ignorer")
+							break
+							;;
+						*) echo invalid option
+							error=1
+							;;
+						esac
+					break
+					done
+					fileLine=$(diff  "$fileA" "$fileB" | grep '^[0-9]' | head -n 1)
+				done
+			done 3< "$conFile"
+			rm "$RacineB.fileDiff"
+			rm "$RacineB.temp"
+			
 
 		else
 			echo "Conflits ignorés"
