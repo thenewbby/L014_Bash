@@ -14,11 +14,12 @@ function print {
   echo ""
   echo -e "\t\tRacineA/$line\tJournal\t\tRacineB/$line"
   echo -e "\t\t----------------------------------------------------"
-  echo -e "\e[1mpermission\e[0m:\t   $(stat -c "%a" $RacineA$line)\t\t   $Jperm\t\t   $(stat -c "%a" $RacineB$(basename "$RacineA")/$line)"
-  echo -e "\e[1mDate modication\e[0m:   $(stat -c "%Y" $RacineA$line)\t   $Jmodif\t   $(stat -c "%Y" $RacineB$(basename "$RacineA")/$line)"
-  echo -e "\e[1mTaille\e[0m:\t\t   $(stat -c "%s" $RacineA$line)\t\t   $Jsize\t\t   $(stat -c "%s" $RacineB$(basename "$RacineA")/$line)"
-  echo -e "\e[1mGroupe\e[0m:\t\t   $(stat -c "%G" $RacineA$line)\t   $Jidgroup\t   $(stat -c "%G" $RacineB$(basename "$RacineA")/$line)"
-  echo -e "\e[1mOwner\e[0m:\t\t   $(stat -c "%U" $RacineA$line)\t   $Jidowner\t   $(stat -c "%U" $RacineB$(basename "$RacineA")/$line)"
+  echo -e "\e[1mType:\e[0m\t\t |  $(file -b $RacineA$line)   |\t\t |  $(file -b $RacineB$(basename $RacineA)/$line)"
+  echo -e "\e[1mpermission\e[0m:\t |  $(stat -c "%a" $RacineA$line)\t\t |  $Jperm\t\t |  $(stat -c "%a" $RacineB$(basename "$RacineA")/$line)"
+  echo -e "\e[1mDate modication\e[0m: |  $(stat -c "%Y" $RacineA$line)\t |  $Jmodif\t |  $(stat -c "%Y" $RacineB$(basename "$RacineA")/$line)"
+  echo -e "\e[1mTaille\e[0m:\t\t |  $(stat -c "%s" $RacineA$line)\t\t |  $Jsize\t |  $(stat -c "%s" $RacineB$(basename "$RacineA")/$line)"
+  echo -e "\e[1mGroupe\e[0m:\t\t |  $(stat -c "%G" $RacineA$line)\t |  $Jidgroup\t |  $(stat -c "%G" $RacineB$(basename "$RacineA")/$line)"
+  echo -e "\e[1mOwner\e[0m:\t\t |  $(stat -c "%U" $RacineA$line)\t |  $Jidowner\t |  $(stat -c "%U" $RacineB$(basename "$RacineA")/$line)"
   echo ""
 }
 
@@ -60,7 +61,5 @@ EOF
     done
     clear
 done 9< $conFile
-
-echo fin
 
 rm $conFile
