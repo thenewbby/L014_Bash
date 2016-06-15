@@ -145,8 +145,86 @@ function TestSynchro {
 
     elif [[ -d "$RacineA$fichier" && -d "$RacineB$(basename "$RacineA")/$fichier" && -n $line ]] ; then #si directory present dans les deux racine et dans le journal
       #recursive
+      local  Jperm=$(cut -f 3 -d ' ' <<< "$line")
+      local  Jmodif=$(cut -f 4 -d ' ' <<< "$line")
+      local  Jsize=$(cut -f 5 -d ' ' <<< "$line")
+      local  Jidgroup=$(cut -f 6 -d ' ' <<< "$line")
+      local  Jidowner=$(cut -f 7 -d ' ' <<< "$line")
 
-      # test méta sauf size
+      if [[ $(stat -c "%a" "$RacineA$fichier") -eq $Jperm && $(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier") -ne $Jperm ]]; then #si permission fichier racineA est comme le journal mais pas racineB
+        #change permission
+        chmod -v "$(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier")" "$RacineA$fichier" >> $RacineB.log
+
+        sed -i "s|^\($RacineA $fichier\) [0-9]\{3\} \(.*\)$|\1 $(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier") \2|" $RacineB.synchro
+
+        Jperm=$(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier")
+
+        # echo "permissionB"
+      elif [[ $(stat -c "%a" "$RacineA$fichier") -ne $Jperm && $(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier") -eq $Jperm ]]; then #si permission fichier racineB est comme le journal mais pas racineA
+        chmod -v "$(stat -c "%a" "$RacineA$fichier")" "$RacineB$(basename "$RacineA")/$fichier" >> $RacineB.log
+
+        sed -i "s|^\($RacineA $fichier\) [0-9]\{3\} \(.*\)$|\1 $(stat -c "%a" "$RacineA$fichier") \2|" $RacineB.synchro
+
+        Jperm=$(stat -c "%a" "$RacineA$fichier")
+
+        # echo "permissionA"
+      fi
+
+
+      if [[ $(stat -c "%G" "$RacineA$fichier") = "$Jidgroup" && $(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier") != "$Jidgroup" ]]; then
+        #si groupe owner racineA egale au journal et pas racineB
+        sudo chown -v :"$(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier")" "$RacineA$fichier" >> $RacineB.log
+
+        sed -i "s|^\($RacineA $fichier [0-9]\{3\} [^ ]* [^ ]*\) [^ ]* \(.*\)$|\1 $(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier") \2|" $RacineB.synchro # modification du groupe dans .synchro
+
+        Jidgroup=$(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier")
+
+        # echo "idgroupB"
+
+      elif [[ $(stat -c "%G" "$RacineA$fichier") != "$Jidgroup" && $(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier") = "$Jidgroup" ]]; then #si groupe owner racineB egale au journal et pas racineA
+        sudo chown -v :"$(stat -c "%G" "$RacineA$fichier")" "$RacineB$(basename "$RacineA")/$fichier" >> $RacineB.log
+
+        sed -i "s|^\($RacineA $fichier [0-9]\{3\} [^ ]* [^ ]* [^ ]*\) [^ ]*|\1 $(stat -c "%U" "$RacineA$fichier")|" $RacineB.synchro # modification du owner dans .synchro
+
+        Jidgroup=$(stat -c "%U" "$RacineA$fichier")
+
+        # echo "idgroupA"
+      fi
+
+      if [[ $(stat -c "%U" "$RacineA$fichier") = "$Jidowner" && $(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier") != "$Jidowner" ]]; then #si owner racineA egale au journal et pas racineB
+        sudo chown -v "$(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier")" "$RacineA$fichier" >> $RacineB.log
+
+        sed -i "s|^\($RacineA $fichier [0-9]\{3\} [^ ]* [^ ]* [^ ]*\) [^ ]*|\1 $(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier")|" $RacineB.synchro # modification du owner dans .synchro
+
+        Jidowner=$(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier")
+
+        # echo "idownerB"
+
+      elif [[ $(stat -c "%U" "$RacineA$fichier") != "$Jidowner" && $(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier") = "$Jidowner" ]]; then #si owner racineB egale au journal et pas racineA
+        sudo chown -v "$(stat -c "%U" "$RacineA$fichier")" "$RacineB$(basename "$RacineA")/$fichier" >> $RacineB.log
+
+        sed -i "s|^\($RacineA $fichier [0-9]\{3\} [^ ]* [^ ]* [^ ]*\) [^ ]*|\1 $(stat -c "%U" "$RacineA$fichier")|" $RacineB.synchro # modification du owner dans .synchro
+
+        Jidowner=$(stat -c "%U" "$RacineA$fichier")
+
+        # echo "idownerA"
+      fi
+
+      if [[ $(stat -c "%Y" "$RacineA$fichier") -ne $Jmodif && $(stat -c "%Y" "$RacineB$(basename "$RacineA")/$fichier") -eq $Jmodif ]]; then #si modification fichier racineB est comme le journal pas racineA
+        MAJ "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" 0 "$fichier"
+
+        sed -i "s|^\($RacineA $fichier [0-9]\{3\}\) [^ ]* [^ ]* \(.*\)$|\1 $(stat -c "%Y" "$RacineA$fichier") $(stat -c "%s" "$RacineA$fichier") \2|" $RacineB.synchro #modification de la date et de la taille dans .synchro
+
+        # echo "modificationA"
+
+      elif [[ $(stat -c "%Y" "$RacineA$fichier") -eq $Jmodif && $(stat -c "%Y" "$RacineB$(basename "$RacineA")/$fichier") -ne $Jmodif ]]; then #si modification fichier racineA est comme le journal pas racineB
+        MAJ "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" 0 "$fichier"
+
+        sed -i "s|^\($RacineA ${3}$fichier [0-9]\{3\}\) [^ ]* [^ ]* \(.*\)$|\1 $(stat -c "%Y" "$RacineB$(basename "$RacineA")/$fichier") $(stat -c "%s" "$RacineB$(basename "$RacineA")/$fichier") \2|" $RacineB.synchro #modification de la date et de la taille dans .synchro
+
+        # echo "modificationB"
+      fi
+
       TestSynchro "$fichier/"
 
     elif [[ -f "$RacineA$fichier" && -f "$RacineB$(basename "$RacineA")/$fichier" && -n $line ]]; then #si fichier présent dans les deux racine et dans le journal
