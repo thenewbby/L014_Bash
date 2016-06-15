@@ -1,5 +1,81 @@
 #!/bin/bash
 
+function Meta_test {
+
+  Jperm=$(cut -f 3 -d ' ' <<< "$line")
+  Jmodif=$(cut -f 4 -d ' ' <<< "$line")
+  Jsize=$(cut -f 5 -d ' ' <<< "$line")
+  Jidgroup=$(cut -f 6 -d ' ' <<< "$line")
+  Jidowner=$(cut -f 7 -d ' ' <<< "$line")
+  # Jperm=$(sed "s|^$RacineA ${3}$fichier \([0-9]\{3\}\).*|\1|" <<< $line )
+  # Jmodif=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} \([^ ]*\).*|\1|" <<< $line )
+  # Jsize=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} [^ ]* \([^ ]*\).*|\1|" <<< $line )
+  # Jidgroup=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} [^ ]* [^ ]* \([^ ]*\).*|\1|" <<< $line )
+  # Jidowner=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} [^ ]* [^ ]* [^ ]* \([^ ]*\).*|\1|" <<< $line )
+
+  # echo $Jperm
+  # echo $Jmodif
+  # echo $Jsize
+  # echo $Jidgroup
+  # echo $Jidowner
+
+    if [[ $(stat -c "%a" "$RacineA$fichier") -eq $Jperm && $(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier") -ne $Jperm ]]; then #si permission fichier racineA est comme le journal mais pas racineB
+      #change permission
+
+      Modif_perm "$RacineA$fichier" "$RacineB$(basename "$RacineA")/$fichier" "$fichier"
+
+
+      Jperm=$(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier")
+
+      # echo "permissionB"
+    elif [[ $(stat -c "%a" "$RacineA$fichier") -ne $Jperm && $(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier") -eq $Jperm ]]; then #si permission fichier racineB est comme le journal mais pas racineA
+
+      Modif_perm "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" "$fichier"
+
+
+      Jperm=$(stat -c "%a" "$RacineA$fichier")
+
+      # echo "permissionA"
+    fi
+
+
+    if [[ $(stat -c "%G" "$RacineA$fichier") = "$Jidgroup" && $(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier") != "$Jidgroup" ]]; then
+      #si groupe owner racineA egale au journal et pas racineB
+
+      Modif_group "$RacineA$fichier" "$RacineB$(basename "$RacineA")/$fichier" "$fichier"
+
+      Jidgroup=$(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier")
+
+      # echo "idgroupB"
+
+    elif [[ $(stat -c "%G" "$RacineA$fichier") != "$Jidgroup" && $(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier") = "$Jidgroup" ]]; then #si groupe owner racineB egale au journal et pas racineA
+
+    Modif_group "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" "$fichier"
+
+      Jidgroup=$(stat -c "%U" "$RacineA$fichier")
+
+      # echo "idgroupA"
+    fi
+
+    if [[ $(stat -c "%U" "$RacineA$fichier") = "$Jidowner" && $(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier") != "$Jidowner" ]]; then #si owner racineA egale au journal et pas racineB
+
+    Modif_owner "$RacineA$fichier" "$RacineB$(basename "$RacineA")/$fichier" "$fichier"
+
+      Jidowner=$(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier")
+
+      # echo "idownerB"
+
+    elif [[ $(stat -c "%U" "$RacineA$fichier") != "$Jidowner" && $(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier") = "$Jidowner" ]]; then #si owner racineB egale au journal et pas racineA
+
+    Modif_owner "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" "$fichier"
+
+      Jidowner=$(stat -c "%U" "$RacineA$fichier")
+
+      # echo "idownerA"
+    fi
+
+}
+
 function Update_size {
   # $1 fichier référence
   # $3 Chemin
@@ -154,7 +230,7 @@ function TestSynchro {
 
   for fichier in  $RacineA$1* ; do
 
-  local fichier="$(sed "s|$RacineA||" <<< $fichier)"
+    fichier="$(sed "s|$RacineA||" <<< $fichier)"
 
     # echo ""
     # echo -e "\e[4mTestSynchro\e[0m"
@@ -179,74 +255,16 @@ function TestSynchro {
 
     elif [[ -d "$RacineA$fichier" && -d "$RacineB$(basename "$RacineA")/$fichier" && -n $line ]] ; then #si directory present dans les deux racine et dans le journal
       #recursive
-      local  Jperm=$(cut -f 3 -d ' ' <<< "$line")
-      local  Jmodif=$(cut -f 4 -d ' ' <<< "$line")
-      local  Jsize=$(cut -f 5 -d ' ' <<< "$line")
-      local  Jidgroup=$(cut -f 6 -d ' ' <<< "$line")
-      local  Jidowner=$(cut -f 7 -d ' ' <<< "$line")
 
-      if [[ $(stat -c "%a" "$RacineA$fichier") -eq $Jperm && $(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier") -ne $Jperm ]]; then #si permission fichier racineA est comme le journal mais pas racineB
-        #change permission
-
-        Modif_perm "$RacineA$fichier" "$RacineB$(basename "$RacineA")/$fichier" "$fichier"
-
-        Jperm=$(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier")
-
-        # echo "permissionB"
-      elif [[ $(stat -c "%a" "$RacineA$fichier") -ne $Jperm && $(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier") -eq $Jperm ]]; then #si permission fichier racineB est comme le journal mais pas racineA
-
-        Modif_perm "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" "$fichier"
-
-        Jperm=$(stat -c "%a" "$RacineA$fichier")
-
-        # echo "permissionA"
-      fi
-
-
-      if [[ $(stat -c "%G" "$RacineA$fichier") = "$Jidgroup" && $(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier") != "$Jidgroup" ]]; then
-        #si groupe owner racineA egale au journal et pas racineB
-
-        Modif_group "$RacineA$fichier" "$RacineB$(basename "$RacineA")/$fichier" "$fichier"
-
-        Jidgroup=$(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier")
-
-        # echo "idgroupB"
-
-      elif [[ $(stat -c "%G" "$RacineA$fichier") != "$Jidgroup" && $(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier") = "$Jidgroup" ]]; then #si groupe owner racineB egale au journal et pas racineA
-
-        Modif_group "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" "$fichier"
-
-        Jidgroup=$(stat -c "%U" "$RacineA$fichier")
-
-        # echo "idgroupA"
-      fi
-
-      if [[ $(stat -c "%U" "$RacineA$fichier") = "$Jidowner" && $(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier") != "$Jidowner" ]]; then #si owner racineA egale au journal et pas racineB
-
-        Modif_owner "$RacineA$fichier" "$RacineB$(basename "$RacineA")/$fichier" "$fichier"
-
-        Jidowner=$(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier")
-
-        # echo "idownerB"
-
-      elif [[ $(stat -c "%U" "$RacineA$fichier") != "$Jidowner" && $(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier") = "$Jidowner" ]]; then #si owner racineB egale au journal et pas racineA
-
-      Modif_owner "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" "$fichier"
-
-        Jidowner=$(stat -c "%U" "$RacineA$fichier")
-
-        # echo "idownerA"
-      fi
+      Meta_test
 
       if [[ $(stat -c "%Y" "$RacineA$fichier") -ne $Jmodif && $(stat -c "%Y" "$RacineB$(basename "$RacineA")/$fichier") -eq $Jmodif ]]; then #si modification fichier racineB est comme le journal pas racineA
-        MAJ "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" 0 "$fichier"
 
         Update_size "$RacineA$fichier" "$fichier"
 
         # echo "modificationA"
 
       elif [[ $(stat -c "%Y" "$RacineA$fichier") -eq $Jmodif && $(stat -c "%Y" "$RacineB$(basename "$RacineA")/$fichier") -ne $Jmodif ]]; then #si modification fichier racineA est comme le journal pas racineB
-        MAJ "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" 0 "$fichier"
 
         Update_size "$RacineB$(basename "$RacineA")/$fichier" "$fichier"
 
@@ -257,24 +275,6 @@ function TestSynchro {
 
     elif [[ -f "$RacineA$fichier" && -f "$RacineB$(basename "$RacineA")/$fichier" && -n $line ]]; then #si fichier présent dans les deux racine et dans le journal
       # echo "meta"
-
-      local  Jperm=$(cut -f 3 -d ' ' <<< "$line")
-      local  Jmodif=$(cut -f 4 -d ' ' <<< "$line")
-      local  Jsize=$(cut -f 5 -d ' ' <<< "$line")
-      local  Jidgroup=$(cut -f 6 -d ' ' <<< "$line")
-      local  Jidowner=$(cut -f 7 -d ' ' <<< "$line")
-      # Jperm=$(sed "s|^$RacineA ${3}$fichier \([0-9]\{3\}\).*|\1|" <<< $line )
-      # Jmodif=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} \([^ ]*\).*|\1|" <<< $line )
-      # Jsize=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} [^ ]* \([^ ]*\).*|\1|" <<< $line )
-      # Jidgroup=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} [^ ]* [^ ]* \([^ ]*\).*|\1|" <<< $line )
-      # Jidowner=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} [^ ]* [^ ]* [^ ]* \([^ ]*\).*|\1|" <<< $line )
-
-      # echo $Jperm
-      # echo $Jmodif
-      # echo $Jsize
-      # echo $Jidgroup
-      # echo $Jidowner
-
       #faire different test sur les metadonnée
       if [[ $(stat -c "%Y" "$RacineA$fichier") -ne $Jmodif && $(stat -c "%Y" "$RacineB$(basename "$RacineA")/$fichier") -eq $Jmodif ]]; then #si modification fichier racineB est comme le journal pas racineA
         MAJ "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" 0 "$fichier"
@@ -291,62 +291,7 @@ function TestSynchro {
         # echo "modificationB"
 
       else
-
-        if [[ $(stat -c "%a" "$RacineA$fichier") -eq $Jperm && $(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier") -ne $Jperm ]]; then #si permission fichier racineA est comme le journal mais pas racineB
-          #change permission
-
-          Modif_perm "$RacineA$fichier" "$RacineB$(basename "$RacineA")/$fichier" "$fichier"
-
-
-          Jperm=$(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier")
-
-          # echo "permissionB"
-        elif [[ $(stat -c "%a" "$RacineA$fichier") -ne $Jperm && $(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier") -eq $Jperm ]]; then #si permission fichier racineB est comme le journal mais pas racineA
-
-          Modif_perm "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" "$fichier"
-
-
-          Jperm=$(stat -c "%a" "$RacineA$fichier")
-
-          # echo "permissionA"
-        fi
-
-
-        if [[ $(stat -c "%G" "$RacineA$fichier") = "$Jidgroup" && $(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier") != "$Jidgroup" ]]; then
-          #si groupe owner racineA egale au journal et pas racineB
-
-          Modif_group "$RacineA$fichier" "$RacineB$(basename "$RacineA")/$fichier" "$fichier"
-
-          Jidgroup=$(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier")
-
-          # echo "idgroupB"
-
-        elif [[ $(stat -c "%G" "$RacineA$fichier") != "$Jidgroup" && $(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier") = "$Jidgroup" ]]; then #si groupe owner racineB egale au journal et pas racineA
-
-        Modif_group "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" "$fichier"
-
-          Jidgroup=$(stat -c "%U" "$RacineA$fichier")
-
-          # echo "idgroupA"
-        fi
-
-        if [[ $(stat -c "%U" "$RacineA$fichier") = "$Jidowner" && $(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier") != "$Jidowner" ]]; then #si owner racineA egale au journal et pas racineB
-
-        Modif_owner "$RacineA$fichier" "$RacineB$(basename "$RacineA")/$fichier" "$fichier"
-
-          Jidowner=$(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier")
-
-          # echo "idownerB"
-
-        elif [[ $(stat -c "%U" "$RacineA$fichier") != "$Jidowner" && $(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier") = "$Jidowner" ]]; then #si owner racineB egale au journal et pas racineA
-
-        Modif_owner "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" "$fichier"
-
-          Jidowner=$(stat -c "%U" "$RacineA$fichier")
-
-          # echo "idownerA"
-        fi
-
+        Meta_test
       fi
 
       if [[ $(stat -c "%U" "$RacineA$fichier") = "$Jidowner" && $(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier") = "$Jidowner" && $(stat -c "%a" "$RacineA$fichier") -eq $Jperm && $(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier") -eq $Jperm && $(stat -c "%Y" "$RacineA$fichier") -eq $Jmodif && $(stat -c "%Y" "$RacineB$(basename "$RacineA")/$fichier") -eq $Jmodif && $(stat -c "%G" "$RacineA$fichier") = "$Jidgroup" && $(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier") = "$Jidgroup" ]]; then #verifie si il l'y a pas de conflit
