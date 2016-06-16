@@ -1,27 +1,16 @@
 #!/bin/bash
-
 function Metadata_sup {
   echo -e "$inden\e[1mSuppression:\e[0m des fichier"
   rm -rvf "$RacineA$line" "$RacineB$(basename $RacineA)/$line" >> $RacineB.log
-
   egrep -v "^$RacineA $line.*$" $RacineB.synchro > ~/.temp
-
   mv ~/.temp $RacineB.synchro
 }
-
 function Metadata_CP {
-  # $1 Fichier/directory à déplacer
-  # $2 Chemin à le mettre
-  # $3 chemin
-
   Sup $line $2
   MAJ $1 $2 1 $line
-
 }
-
 function Metadata_manuelle {
   echo -e "\e[1mGestion manuelle:\e[0m"
-
   while read -u 9 line; do
       options2=("Supprimer" "Copier-Coller" "Permission" "GroupeOwner" "Owner" "Ignorer")
       print
@@ -31,9 +20,7 @@ function Metadata_manuelle {
             "Supprimer")
                 Metadata_sup
               ;;
-
             "Copier-Coller")
-
               options3=("A => B" "A <= B" "Retour")
               select opt3 in "${options3[@]}"; do
                 case $opt3 in
@@ -53,9 +40,7 @@ function Metadata_manuelle {
                     ;;
                 esac
               done
-
               ;;
-
             "Permission")
               options3=("A => B" "A <= B" "Retour")
               select opt3 in "${options3[@]}"; do
@@ -77,7 +62,6 @@ function Metadata_manuelle {
                 esac
               done
               ;;
-
             "GroupeOwner")
               options3=("A => B" "A <= B" "Retour")
               select opt3 in "${options3[@]}"; do
@@ -99,7 +83,6 @@ function Metadata_manuelle {
                 esac
               done
               ;;
-
             "Owner")
               options3=("A => B" "A <= B" "Retour")
                 select opt3 in "${options3[@]}"; do
@@ -121,11 +104,9 @@ function Metadata_manuelle {
                   esac
                 done
               ;;
-
             "Ignorer")
                 break
               ;;
-
             *)
             echo options invalide
                 error=1
@@ -140,7 +121,6 @@ function Metadata_manuelle {
         if [[ $error -eq 0 ]]; then
           if [[ $(stat -c "%U" "$RacineA$line") = "$Jidowner" && $(stat -c "%U" "$RacineB$(basename "$RacineA")/$line") = "$Jidowner" && $(stat -c "%a" "$RacineA$line") -eq $Jperm && $(stat -c "%a" "$RacineB$(basename "$RacineA")/$line") -eq $Jperm && $(stat -c "%Y" "$RacineA$line") -eq $Jmodif && $(stat -c "%Y" "$RacineB$(basename "$RacineA")/$line") -eq $Jmodif && $(stat -c "%G" "$RacineA$line") = "$Jidgroup" && $(stat -c "%G" "$RacineB$(basename "$RacineA")/$line") = "$Jidgroup" ]]; then #fichier egale
           break
-
           else
             print
             echo -e "
@@ -151,9 +131,7 @@ function Metadata_manuelle {
       done
       clear
   done 9< $conFile
-
 }
-
 function Metadata_automatique {
   while read line
   do
@@ -168,7 +146,6 @@ function Metadata_automatique {
     fi
   done < $conFile
 }
-
 function Data_automatique {
   echo -e "\e[1mGestion automatique...:\e[0m"
   while read -u 3 line
@@ -185,24 +162,16 @@ function Data_automatique {
   done 3< "$conFile"
   echo -e "remplacement terminé"
 }
-
 function Data_manuelle {
-
     clear
     echo -e "\e[1mGestion manuelle:\e[0m"
-    #diff racineA/solve.sh racineB/racineA/solve.sh | grep '^[0-9]' | grep ','
-    #diff racineA/solve.sh racineB/racineA/solve.sh | grep '^[0-9]' | grep -v ','
-    #diff output: XX ,XXletterXX, XX
-    #           line begin in file 1, line ending in file1 type of change line begin in file 2, line ending in file2
     while read -u 3 line
     do
       fileA="$RacineA$line"
       fileB="$RacineB$(basename $RacineA)/$line"
-      #fileDiff=$(diff "$fileA" "$fileB" | grep '^[0-9]')
       fileLine=$(diff --speed-large-files "$fileA" "$fileB" | grep '^[0-9]' | head -n 1)
       while [[ -n "$fileLine" ]]
       do
-
         echo "-------------------------------DIFF RESULTS-------------------------------"
         diff "$fileA" "$fileB" | grep '^[0-9]'
         echo "-------------line--------------"
@@ -217,36 +186,26 @@ function Data_manuelle {
         else
           mod="un ajout"
         fi
-
           if [[ -z $(sed 's|[0-9]*,.*,[0-9]*||' <<< "$fileLine") ]] ; then
-
           debModA=$(sed 's|\([0-9]*\),.*|\1|' <<< "$fileLine")
           finModA=$(sed 's|^.*,\([0-9]*\)[a-z].*|\1|' <<< "$fileLine")
           debModB=$(sed 's|.*[a-z]\([0-9]*\),.*|\1|' <<< "$fileLine")
           finModB=$(sed 's|.*[a-z][0-9]*,\([0-9]*\)|\1|' <<< "$fileLine")
-
         elif [[ -z $(sed 's|[0-9]*,[0-9]*[a-z][0-9]*||' <<< "$fileLine") ]] ; then
-
           debModA=$(sed 's|\([0-9]*\),.*|\1|' <<< "$fileLine")
           finModA=$(sed 's|^.*,\([0-9]*\)[a-z].*|\1|' <<< "$fileLine")
           debModB=$(sed 's|.*[a-z]\([0-9]*\)|\1|' <<< "$fileLine")
           finModB=$debModB
-
         elif [[ -z $(sed 's|[0-9]*[a-z][0-9]*,[0-9]*||' <<< "$fileLine") ]]; then
-
           debModA=$(sed 's|\([0-9]*\)[a-z].*|\1|' <<< "$fileLine")
           finModA=$debModA
           debModB=$(sed 's|.*[a-z]\([0-9]*\),.*|\1|' <<< "$fileLine")
           finModB=$(sed 's|.*[a-z][0-9]*,\([0-9]*\)|\1|' <<< "$fileLine")
-
-
         elif [[ -z $(sed 's|[0-9]*[a-z][0-9]*||' <<< "$fileLine") ]]; then
-
           debModA=$(sed 's|\([0-9]*\)[a-z].*|\1|' <<< "$fileLine")
           finModA=$debModA
           debModB=$(sed 's|.*[a-z]\([0-9]*\)|\1|' <<< "$fileLine")
           finModB=$debModB
-
         fi
         splitFileA=$(head -n "$finModA" "$fileA" | tail -n $((finModA-debModA+1)))
         splitFileB=$(head -n "$finModB" "$fileB" | tail -n $((finModB-debModB+1)))
@@ -264,12 +223,9 @@ function Data_manuelle {
         head -n $((debModB-1)) "$fileB"
         echo "SPLIT FILE"
         echo -e "$splitFileA"
-        #echo "TAIL FILE"
-        #tail -n "+$((finModB+1))" "$fileB"
         echo '.'
         echo "Que voulez-vous faire? "
         echo "."
-
         options=("Contenu de $fileA dans $fileB" "Contenu de $fileB dans $fileA" "Ignorer")
         select opt in "${options[@]}"; do
           error=0
@@ -282,8 +238,6 @@ function Data_manuelle {
             head -n $((debModB-1)) "$fileB"
             echo "SPLIT FILE"
             echo "$splitFileA"
-            #echo "TAIL FILE"
-            #tail -n "+$((finModB+1))" "$fileB"
             cat "$fileB" > "$RacineB.temp"
             fileSize=$(wc -l $RacineB.temp | sed 's|\(^[0-9]*\) .*|\1|')
             echo "---------------file size in number of lines"
@@ -297,7 +251,6 @@ function Data_manuelle {
             echo $nubrLine
             echo $((finModB))
             tail -n "+$((finModB+1))" "$RacineB.temp" >> "$fileB" #ici ça merde, POURQUOI??????
-            #echo "you chose choice 1"
             ;;
           "Contenu de $fileB dans $fileA")
             cat "$fileA" > "$RacineB.temp"
@@ -305,7 +258,6 @@ function Data_manuelle {
             head -n $((debModA-1)) "$RacineB.temp" > "$fileA"
             echo "$splitFileB" >> "$fileA"
             tail -n "$((fileSize-finModA))" "$RacineB.temp" >> "$fileA"
-            #echo "you chose choice 2"
             ;;
           "Ignorer")
             out=1
@@ -327,7 +279,6 @@ function Data_manuelle {
     rm "$RacineB.fileDiff" 2> /dev/null
     rm "$RacineB.temp" 2> /dev/null
 }
-
 function print {
   l=$(egrep "^$RacineA $line/? .*$" $RacineB.synchro)
   Jperm=$(cut -f 3 -d ' ' <<< "$l")
@@ -346,143 +297,61 @@ function print {
   echo -e "\e[1mOwner\e[0m:\t\t |  $(stat -c "%U" $RacineA$line)\t |  $Jidowner\t |  $(stat -c "%U" $RacineB$(basename "$RacineA")/$line)"
   echo ""
 }
-
 function changeMetadata {
 	file1="$1"
 	file2="$2"
   chemin="$3"
-
   Modif_perm "$file2" "$file1" "$chemin"
   Modif_owner "$file2" "$file1" "$chemin"
   Modif_group "$file2" "$file1" "$chemin"
   Modif_perm "$file2" "$file1" "$chemin"
-
 	# chmod  $(stat -c "%a" "$file1") "$file2" #change le mode
 	# chown $(stat -c "%U" "$file1") "$file2" #change le possesseur du fichier
 	touch -t "$(date -r "$file1" +%y%m%d%H%M.%S)" "$file2" #change la date de modification
 	# chgrp $(stat -c "%G" "$file1") "$file2" #change le groupe
 	sed -i "s|^\($RacineA $chemin [0-9]\{3\}\) \(.*\)$|\1 $(stat -c "%a" "$file1") \2|" $RacineB.synchro #modifie le .synchro
   sed -i "s|^\($RacineA $chemin [0-9]\{3\} [^ ]*\) [^ ]* \(.*\)|\1 $(stat -c "%a" "$file1") \2|" $RacineB.synchro
-
-
 }
-
 function Meta_test {
-
-
-  # Jperm=$(sed "s|^$RacineA ${3}$fichier \([0-9]\{3\}\).*|\1|" <<< $line )
-  # Jmodif=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} \([^ ]*\).*|\1|" <<< $line )
-  # Jsize=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} [^ ]* \([^ ]*\).*|\1|" <<< $line )
-  # Jidgroup=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} [^ ]* [^ ]* \([^ ]*\).*|\1|" <<< $line )
-  # Jidowner=$(sed "s|^$RacineA ${3}$fichier [0-9]\{3\} [^ ]* [^ ]* [^ ]* \([^ ]*\).*|\1|" <<< $line )
-
-  # echo $Jperm
-  # echo $Jmodif
-  # echo $Jsize
-  # echo $Jidgroup
-  # echo $Jidowner
-
     if [[ $(stat -c "%a" "$RacineA$fichier") -eq $Jperm && $(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier") -ne $Jperm ]]; then #si permission fichier racineA est comme le journal mais pas racineB
-      #change permission
-
       Modif_perm "$RacineA$fichier" "$RacineB$(basename "$RacineA")/$fichier" "$fichier"
-
-
       Jperm=$(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier")
-
-      # echo "permissionB"
     elif [[ $(stat -c "%a" "$RacineA$fichier") -ne $Jperm && $(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier") -eq $Jperm ]]; then #si permission fichier racineB est comme le journal mais pas racineA
-
       Modif_perm "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" "$fichier"
-
-
       Jperm=$(stat -c "%a" "$RacineA$fichier")
-
-      # echo "permissionA"
     fi
-
-
     if [[ $(stat -c "%G" "$RacineA$fichier") = "$Jidgroup" && $(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier") != "$Jidgroup" ]]; then
-      #si groupe owner racineA egale au journal et pas racineB
-
       Modif_group "$RacineA$fichier" "$RacineB$(basename "$RacineA")/$fichier" "$fichier"
-
       Jidgroup=$(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier")
-
-      # echo "idgroupB"
-
     elif [[ $(stat -c "%G" "$RacineA$fichier") != "$Jidgroup" && $(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier") = "$Jidgroup" ]]; then #si groupe owner racineB egale au journal et pas racineA
-
     Modif_group "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" "$fichier"
-
       Jidgroup=$(stat -c "%U" "$RacineA$fichier")
-
-      # echo "idgroupA"
     fi
-
     if [[ $(stat -c "%U" "$RacineA$fichier") = "$Jidowner" && $(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier") != "$Jidowner" ]]; then #si owner racineA egale au journal et pas racineB
-
     Modif_owner "$RacineA$fichier" "$RacineB$(basename "$RacineA")/$fichier" "$fichier"
-
       Jidowner=$(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier")
-
-      # echo "idownerB"
-
     elif [[ $(stat -c "%U" "$RacineA$fichier") != "$Jidowner" && $(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier") = "$Jidowner" ]]; then #si owner racineB egale au journal et pas racineA
-
     Modif_owner "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" "$fichier"
-
       Jidowner=$(stat -c "%U" "$RacineA$fichier")
-
-      # echo "idownerA"
     fi
-
 }
-
 function Update_size {
-  # $1 fichier référence
-  # $3 Chemin
   sed -i "s|^\($RacineA $2 [0-9]\{3\}\) [^ ]* [^ ]* \(.*\)$|\1 $(stat -c "%Y" "$1") $(stat -c "%s" "$1") \2|" $RacineB.synchro #modification de la date et de la taille dans .synchro
 }
-
 function Modif_owner {
-  # $1 fichier à modifier
-  # $2 fichier référence
-  # $3 Chemin
   sudo chown -v :"$(stat -c "%G" "$2")" "$1" >> $RacineB.log
-
   sed -i "s|^\($RacineA $3 [0-9]\{3\} [^ ]* [^ ]*\) [^ ]* \(.*\)$|\1 $(stat -c "%G" "$2") \2|" $RacineB.synchro # modification du groupe dans .synchro
-
 }
-
 function Modif_group {
-  # $1 fichier à modifier
-  # $2 fichier référence
-  # $3 Chemin
   sudo chown -v :"$(stat -c "%G" "$2")" "$1" >> $RacineB.log
-
   sed -i "s|^\($RacineA $3 [0-9]\{3\} [^ ]* [^ ]*\) [^ ]* \(.*\)$|\1 $(stat -c "%G" "$2") \2|" $RacineB.synchro # modification du groupe dans .synchro
 }
-
 function Modif_perm {
-  # $1 fichier à modifier
-  # $2 fichier référence
-  # $3 Chemin
   chmod -v "$(stat -c "%a" "$2")" "$1" >> $RacineB.log
-
   sed -i "s|^\($RacineA $3\) [0-9]\{3\} \(.*\)$|\1 $(stat -c "%a" "$2") \2|" $RacineB.synchro
 }
-
-#--------------------------------------------------------------Ecrire Synchro----------------------------------------------------------
-
 function ecrire_synchro {
-
-  # $1 Dossier a "écrire"
-  # $2 RacineA
-  # $3 RacineB/.synchro
-
   RacineOrigine=$2
-
   for fichier in  $1*; do
     if [[ -f $fichier ]]; then
       echo "`sed "s|^\(\$RacineOrigine\)\(.*\)$|\1 \2|" <<< "$fichier"` `stat -c '%a' $fichier` `stat -c '%Y' $fichier` `stat -c '%s' $fichier` `stat -c '%G' $fichier` `stat -c '%U' $fichier`" >> $3
@@ -492,187 +361,84 @@ function ecrire_synchro {
     fi
   done
 }
-
-#-------------------------------------------------------------TestB---------------------------------------------------------
 function TestB {
-
-  # $1 Chemin/
-
   inden+="\t"
   for fichier in $RacineB$(basename $RacineA)/$1* ; do
-
   local fichier="$(sed "s|$RacineB$(basename $RacineA)/||" <<< $fichier)"
   local line=$(egrep "^$RacineA $fichier/? .*$" $RacineB.synchro)
-
-    # echo ""
-    # echo -e "\e[4mTestB \e[0m"
-    # echo -e "\e[1mRacineA:\e[0m $RacineA"
-    # echo -e "\e[1mRacineB\e[0m $RacineB"
-    # echo -e "\e[1mChemin\e[0m $fichier"
-    # echo ""
-
-    # echo $fichier
     if [[ ! ( -e "$RacineA$fichier" ) &&  -e "$RacineB$(basename "$RacineA")/$fichier" ]]; then #si est dans RacineB, pas dans RacineA
       if [[ -z $line ]]; then
-      # echo "MAJA"
         MAJ "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" 1 "$fichier"
         echo -e "$inden\e[42mfichier ou dossier\e[0m: '\e[4m$RacineB$(basename $RacineA)/$fichier\e[0m' synchronisé"
       else
-      # echo "supprimeB"
         Sup "$fichier" "$RacineB$(basename $RacineA)/$fichier"
-
       fi
     elif [[ -d "$RacineA$fichier" && -d "$RacineB$(basename "$RacineA")/$fichier" ]]; then
-      # echo -e "$inden Vérification du dossier '\e[4m$RacineB$(basename "$RacineA")/$fichier\e[0m'"
       TestB "$1$fichier/"
-    # else
-    #    echo -e "$inden\e[42mfichier\e[0m: '\e[4m$RacineB$(basename "$RacineA")/$fichier\e[0m' verifié"
     fi
   done
   inden=${inden::-2}
 }
-
-#-----------------------------------------------------------supprimer-------------------------------------------------------
-
 function Sup {
-  # $1 chemin
-  # $2 Fichier/directory à supprimer
-
-  # echo ""
-  # echo -e "\e[4mSup\e[0m"
-  # echo -e "\e[1mRacineA:\e[0m $RacineA"
-  # echo -e "\e[1mChemin:\e[0m $1"
-  # echo -e "\e[1mFichier à supprimer:\e[0m $2"
-  # echo ""
-
   echo -e "$inden\e[1mSuppression:\e[0m de chemin '\e[4m$2\e[0m'"
   rm -rfv $2 >> $RacineB.log
-
   egrep -v "^$RacineA $1.*$" $RacineB.synchro > ~/.temp
-
   mv ~/.temp $RacineB.synchro
-  # rm -r ~/.temp
 }
-
-#--------------------------------------------------------------Mise à Jour--------------------------------------------------
-
 function MAJ {
-  # $1 Fichier/directory à déplacer
-  # $2 Chemin à le mettre
-  # $3 avec écriture dans le .synchro
-  # $4 chemin
-
-  # echo ""
-  # echo -e "\e[4mMAJ \e[0m"
-  # echo -e "\e[1mRacineA:\e[0m $RacineA"
-  # echo -e "\e[1mFichier à déplacer:\e[0m $1"
-  # echo -e "\e[1mChemin ou le mettre:\e[0m $2"
-  # echo ""
   echo -e "$inden\e[1mTransfert:\e[0m de chemin '\e[4m$1\e[0m' à '\e[4m$2\e[0m'"
   cp -rvf --preserve=all $1 $2 >> $RacineB.log
   if [[ $3 -eq 1 ]]; then
     if [[ -d $1 ]]; then
-      # echo -e "\e[1mDirectory:\e[0m"
       echo "$RacineA" "$4" "`stat -c "%a" $1`" "`stat -c "%Y" $1`" "`stat -c "%s" $1`" "`stat -c "%G" $1`" "`stat -c "%U" $1`" >> $RacineB.synchro
       ecrire_synchro "$RacineA$4" "$RacineA" "$RacineB.synchro"
     else
-      # echo -e "\e[1mFichier:\e[0m"
       echo "$RacineA" "$4" "`stat -c "%a" $1`" "`stat -c "%Y" $1`" "`stat -c "%s" $1`" "`stat -c "%G" $1`" "`stat -c "%U" $1`" >> $RacineB.synchro
     fi
   fi
 }
-
-#---------------------------------------------------------TestSynchro-----------------------------------------------------
-
 function TestSynchro {
-
-  # $1 Chemin/
-
   inden+="\t"
   echo -e "$inden Synchronisation du dossier '\e[4m$RacineA$1\e[0m'"
-
   for fichier in  $RacineA$1* ; do
-
     fichier="$(sed "s|$RacineA||" <<< $fichier)"
-
-    # echo ""
-    # echo -e "\e[4mTestSynchro\e[0m"
-    # echo -e "\e[1mRacineA:\e[0m $RacineA"
-    # echo -e "\e[1mRacineB:\e[0m $RacineB"
-    # echo -e "\e[1mChemin:\e[0m $fichier"
-
     line=$(egrep "^$RacineA $fichier/? .*$" $RacineB.synchro)
-    # echo -e "\e[1mGrep .synchro:\e[0m $line"
-
-
     if [[ -e "$RacineA$fichier" && ! ( -e "$RacineB$(basename "$RacineA")/$fichier" ) ]]  ; then #si est dans RacineA, pas dans RacineB
       if [[ -z $line ]]; then #pas dans le .synchro
-      #copie colle le fichier/directory avec ecriture
-        # echo "MAJB"
         MAJ "$RacineA$fichier" "$RacineB$(basename "$RacineA")/$fichier" 1 "$fichier"
       else # dans le point synchro
-      #supprime le fichier/dossier et la ligne du .synchro
-        # echo "supprimeA"
         Sup "$fichier" "$RacineA$fichier"
       fi
-
     elif [[ -d "$RacineA$fichier" && -d "$RacineB$(basename "$RacineA")/$fichier" && -n $line ]] ; then #si directory present dans les deux racine et dans le journal
-      #recursive
       Jperm=$(cut -f 3 -d ' ' <<< "$line")
       Jmodif=$(cut -f 4 -d ' ' <<< "$line")
       Jsize=$(cut -f 5 -d ' ' <<< "$line")
       Jidgroup=$(cut -f 6 -d ' ' <<< "$line")
       Jidowner=$(cut -f 7 -d ' ' <<< "$line")
-
       Meta_test
-
       if [[ $(stat -c "%Y" "$RacineA$fichier") -ne $Jmodif && $(stat -c "%Y" "$RacineB$(basename "$RacineA")/$fichier") -eq $Jmodif ]]; then #si modification fichier racineB est comme le journal pas racineA
-
         Update_size "$RacineA$fichier" "$fichier"
-
-        # echo "modificationA"
-
       elif [[ $(stat -c "%Y" "$RacineA$fichier") -eq $Jmodif && $(stat -c "%Y" "$RacineB$(basename "$RacineA")/$fichier") -ne $Jmodif ]]; then #si modification fichier racineA est comme le journal pas racineB
-
         Update_size "$RacineB$(basename "$RacineA")/$fichier" "$fichier"
-
-        # echo "modificationB"
       fi
-
       TestSynchro "$fichier/"
-
     elif [[ -f "$RacineA$fichier" && -f "$RacineB$(basename "$RacineA")/$fichier" && -n $line ]]; then #si fichier présent dans les deux racine et dans le journal
-      # echo "meta"
-
       Jperm=$(cut -f 3 -d ' ' <<< "$line")
       Jmodif=$(cut -f 4 -d ' ' <<< "$line")
       Jsize=$(cut -f 5 -d ' ' <<< "$line")
       Jidgroup=$(cut -f 6 -d ' ' <<< "$line")
       Jidowner=$(cut -f 7 -d ' ' <<< "$line")
-
       if [[ $(stat -c "%Y" "$RacineA$fichier") -ne $Jmodif && $(stat -c "%Y" "$RacineB$(basename "$RacineA")/$fichier") -eq $Jmodif ]]; then #si modification fichier racineB est comme le journal pas racineA
-
         MAJ "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" 0 "$fichier"
-
         Update_size "$RacineA$fichier" "$fichier"
-
-        # echo "modificationA"
-
       elif [[ $(stat -c "%Y" "$RacineA$fichier") -eq $Jmodif && $(stat -c "%Y" "$RacineB$(basename "$RacineA")/$fichier") -ne $Jmodif ]]; then #si modification fichier racineA est comme le journal pas racineB
         MAJ "$RacineB$(basename "$RacineA")/$fichier" "$RacineA$fichier" 0 "$fichier"
-
         Update_size "$RacineB$(basename "$RacineA")/$fichier" "$fichier"
-
-        # echo "modificationB"
-
       else
         Meta_test
       fi
-
       if [[ $(stat -c "%U" "$RacineA$fichier") = "$Jidowner" && $(stat -c "%U" "$RacineB$(basename "$RacineA")/$fichier") = "$Jidowner" && $(stat -c "%a" "$RacineA$fichier") -eq $Jperm && $(stat -c "%a" "$RacineB$(basename "$RacineA")/$fichier") -eq $Jperm && $(stat -c "%Y" "$RacineA$fichier") -eq $Jmodif && $(stat -c "%Y" "$RacineB$(basename "$RacineA")/$fichier") -eq $Jmodif && $(stat -c "%G" "$RacineA$fichier") = "$Jidgroup" && $(stat -c "%G" "$RacineB$(basename "$RacineA")/$fichier") = "$Jidgroup" ]]; then #verifie si il l'y a pas de conflit
-
         echo -e "$inden\e[42mfichier\e[0m: '\e[4m$RacineA$fichier\e[0m' synchronisé"
-
       else
         echo "$fichier" >> $RacineB.conflit
         echo -e "$inden\e[41mconflit\e[0m: entre les fichier '\e[4m$RacineA$fichier\e[0m' et '\e[4m$RacineB$(basename $RacineA)/$fichier\e[0m'"
@@ -684,24 +450,15 @@ function TestSynchro {
   done
   inden=${inden::-2}
 }
-
-#----------------------------------------------Main BEGIN-------------------------------------------------------------------
-
-# $1 RacineA
-
 RacineB=~/racineB/
 Chemin=""
 echo ""
-
 if [[ $# -eq 0 || $# -eq 1 ]]; then
   if [[ ! ( -d $RacineB ) ]]; then #Si le fichier ~/racineB n'existe pas, on le créer.
     mkdir $RacineB
   fi
 fi
-
-
 if [[ $# -eq 1 || $# -eq 2 ]]; then
-
   RacineA=$1
   if [[ -d $RacineA ]]; then # si RacineA pointe vers un directory
     DirPath=$RacineA
@@ -713,25 +470,6 @@ if [[ $# -eq 1 || $# -eq 2 ]]; then
     echo -e "'\e[4m$RacineA\e[0m' n'existe pas."
     exit 1
   fi
-  # if [[ $# -eq 2 ]]; then
-  #
-  #   RacineB=$2
-  #   if [[ -d $RacineB ]]; then # si RacineA pointe vers un directory
-  #     DirectoryRacineB=$(basename $RacineB)
-  #   elif [[ -f $RacineB ]]; then # si RacineA pointe vers un fichier
-  #     RacineB=$(dirname $RacineB)/
-  #     DirectoryRacineB=$(basename -- "$(dirname -- "$RacineB")")
-  #   else # si RacineA ne pointe pas vers un fichier ou un directory
-  #     echo -e "'\e[4m$RacineB\e[0m' n'existe pas."
-  #     echo -e "Voulez-vous le créer un dossier '\e[4m$RacineB\e[0m \e[1m[Y/n]:\e[0m"
-  #     read rep
-  #     if [[ $rep = 'n' ]]; then
-  #       exit 1
-  #     fi
-  #     mkdir -p $RacineB
-  #   fi
-  # fi
-
   if [[ -e $RacineB.synchro ]]; then #si le fichier .synchro existe et si RacineA pointe vers quelque chose
     if [[ -z `find $RacineB -name $DirectoryRacineA` ]]; then #si il ne trouve pas le directory dans la racineB
       rm -rf $RacineB* #supprime l'ancienne synchonisation
@@ -741,22 +479,15 @@ if [[ $# -eq 1 || $# -eq 2 ]]; then
         rm $RacineB.log #reset le fichier .log
       fi
       RacineA=$DirPath
-      # "$(dirname $0)"/Main "$DirPath" "$RacineB" ""
     else
       RacineA=$(head -n 1 $RacineB.Config)
       Chemin=$(sed "s|${RacineA}||" <<< "$DirPath")
-      # echo $RacineA
-      # echo $Chemin
-      #"$(dirname $0)"/Main "$RacineA" "$RacineB" "$Chemin"
     fi
   else # si pas de fichier .synchro et que la RacineA pointe vers quelque chose
     echo $DirPath > $RacineB.Config
     RacineA=$DirPath
-    # "$(dirname $0)"/Main "$DirPath" "$RacineB" ""
   fi
-
 elif [[ $# -eq 0 ]]; then #si pas de paramettre passé
-
   if [[ -e $RacineB.Config ]]; then #si le fichier .Config existe
     RacineA=$(head -n 1 $RacineB.Config)
     DirPath=$(pwd)/
@@ -771,12 +502,9 @@ elif [[ $# -eq 0 ]]; then #si pas de paramettre passé
           rm $RacineB.log #reset le fichier .log
         fi
         RacineA=$DirPath
-        #"$(dirname $0)"/Main "$DirPath" "$RacineB" ""
       else
         exit 0
       fi
-    #else
-    #  "$(dirname $0)"/Main "$RacineA" "$RacineB" ""
     fi
   else #Si le fichier .Config n'existe pas
     DirPath=$(pwd)/
@@ -786,51 +514,26 @@ elif [[ $# -eq 0 ]]; then #si pas de paramettre passé
     if [[ $rep = 'y' ]]; then # si reponse est oui
       echo $DirPath > $RacineB.Config #ecrit le fichier .Config
       RacineA=$DirPath
-      #"$(dirname $0)"/Main "$DirPath" "$RacineB" ""
     else
       exit 0
     fi
   fi
-
 else # si plus de deux parametre
-
   echo -e "\e[1mUsage\e[0m: trop de paramettre passés."
   exit 2
 fi
-
-# "$(dirname $0)"/Main "$RacineA" "$RacineB" "$Chemin"
-
-#----------------------------------------------Main-------------------------------------------------------------------------
-
-
 echo ----------"$(date)"---------- >> $RacineB.log
 echo "" >> $RacineB.log
-
 echo -e "\n\e[7mScan\e[0m\n"
-
 inden="\t"
-
 Tgrep=$(egrep "^$RacineA $Chemin/? .*$" $RacineB.synchro 2> /dev/null)
-
 if [[ -d $RacineA$Chemin && -z $Tgrep ]]; then # marche pas
   MAJ "$RacineA$Chemin" "$RacineB$Chemin" 1 "$Chemin"
 fi
-
-
 inden=""
-
 TestSynchro "$Chemin"
-
-# echo -e "\n\e[7mScan de RacineB\e[0m\n"
-
 inden=""
-
 TestB "$Chemin"
-
-# echo -e "\n\e[7mFIN boucle B\e[0m\n"
-
-#test .synchro si on a pas des ligne en trop, si oui, on le supprime et on le signale à l'utilisateur
-
 awk ' BEGIN {FS=" "}
   {
     if(NR!=1)
@@ -850,21 +553,14 @@ awk ' BEGIN {FS=" "}
     }
   }
 ' $RacineB.synchro > tmpfile && mv tmpfile $RacineB.synchro
-
 echo ""
 printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
-echo "FIN SYNCHONISATION"
+echo "FIN SYNCHRONISATION"
 echo ""
-
-
-#------------------------------solveConflitcts--------------------
-
 if [[ -e $RacineB.conflit ]]; then
-
   conFile="$RacineB.conflit"
   contentDiff=1
   metaDiff=1
-
   echo --"Conflit:" >> $RacineB.log
   echo ""
   while read line
@@ -875,7 +571,6 @@ if [[ -e $RacineB.conflit ]]; then
   		contentDiff=0 #on met un boolean à True
   	fi
   done < $conFile
-
   if [[ $contentDiff -eq 0 ]] ; then
   	options1=("automatique" "manuelle" "ignorer")
   	echo -e "Des \e[1mconflits de contenu\e[0m ont été detectés. Voulez-vous une gestion:"
@@ -886,7 +581,6 @@ if [[ -e $RacineB.conflit ]]; then
           Data_automatique
           break
   			;;
-
   			"manuelle")
           Data_manuelle
           break
@@ -902,9 +596,7 @@ if [[ -e $RacineB.conflit ]]; then
   else
   	echo -e "pas de conflit de contenu."
   fi
-
 echo ""
-
   while read line
   do
   	fileA="$RacineA$line"
@@ -913,7 +605,6 @@ echo ""
   		metaDiff=0 #on met un boolean à True
   	fi
   done < $conFile
-
   if [[ $metaDiff -eq 0 ]] ; then # si difference de metadonnées
   options2=("automatique" "manuelle" "ignorer")
   echo -e "Des \e[1mconflits de metadonnées\e[0m ont été detectés. Voulez-vous une gestion:"
@@ -935,15 +626,11 @@ echo ""
           echo "Option invalide"
         ;;
   	esac
-
   done
   else
   echo "Pas de conflit de métadonné"
   fi
   rm -f $RacineB.conflit
 fi
-
 echo "" >> $RacineB.log
-
-
 exit 0
