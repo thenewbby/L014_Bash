@@ -204,6 +204,12 @@ function Data_manuelle {
         splitFileA=$(head -n "$finModA" "$fileA" | tail -n $((finModA-debModA+1)))
         splitFileB=$(head -n "$finModB" "$fileB" | tail -n $((finModB-debModB+1)))
         echo "il y a $mod entre le fichier $fileB et le fichier $fileA:"
+        echo "FILE A"
+        echo $splitFileA
+        echo ""
+        echo "FILE B"
+        echo $splitFileB
+        echo ""
         echo "Que voulez-vous faire? "
         echo ""
         options=("Contenu de $fileA dans $fileB" "Contenu de $fileB dans $fileA" "Ignorer")
@@ -543,7 +549,7 @@ awk ' BEGIN {FS=" "}
 ' $RacineB.synchro > tmpfile && mv tmpfile $RacineB.synchro
 echo ""
 printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
-echo "FIN SYNCHRONISATION"
+echo "FIN SYNCHONISATION"
 echo ""
 if [[ -e $RacineB.conflit ]]; then
   conFile="$RacineB.conflit"
@@ -596,7 +602,7 @@ echo ""
   if [[ $metaDiff -eq 0 ]] ; then # si difference de metadonnées
   options2=("automatique" "manuelle" "ignorer")
   echo -e "Des \e[1mconflits de metadonnées\e[0m ont été detectés. Voulez-vous une gestion:"
-  select opt in "${options2[@]}"; do
+  select opt in "${options1[@]}"; do
   	error=0
   	case $opt in
   		"automatique" )
