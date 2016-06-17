@@ -240,6 +240,12 @@ function Data_manuelle {
         splitFileA=$(head -n "$finModA" "$fileA" | tail -n $((finModA-debModA+1)))
         splitFileB=$(head -n "$finModB" "$fileB" | tail -n $((finModB-debModB+1)))
         echo "il y a $mod entre le fichier $fileB et le fichier $fileA:"
+        echo "FILE A"
+        echo $splitFileA
+        echo ""
+        echo "FILE B"
+        echo $splitFileB
+        echo ""
         echo "Que voulez-vous faire? "
         echo ""
 
