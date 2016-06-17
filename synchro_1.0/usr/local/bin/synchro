@@ -172,13 +172,7 @@ function Data_manuelle {
       fileLine=$(diff --speed-large-files "$fileA" "$fileB" | grep '^[0-9]' | head -n 1)
       while [[ -n "$fileLine" ]]
       do
-        echo "-------------------------------DIFF RESULTS-------------------------------"
-        diff "$fileA" "$fileB" | grep '^[0-9]'
-        echo "-------------line--------------"
-        echo $fileLine
         modType=$(sed 's|[0-9]*,*[0-9]*\([a-z]\)[0-9]*,*[0-9]*|\1|' <<< "$fileLine")
-        echo "-----------------------------MODIFICATION TYPE----------------------------"
-        echo $modType
         if [[ $modType = "c" ]] ; then
           mod="un changement"
         elif [[ $modType = "d" ]]; then
@@ -209,55 +203,49 @@ function Data_manuelle {
         fi
         splitFileA=$(head -n "$finModA" "$fileA" | tail -n $((finModA-debModA+1)))
         splitFileB=$(head -n "$finModB" "$fileB" | tail -n $((finModB-debModB+1)))
-        echo "debModA: |$debModA|"
-        echo "finModA: |$finModA|"
-        echo "debModB: |$debModB|"
-        echo "finModB: |$finModB|"
         echo "il y a $mod entre le fichier $fileB et le fichier $fileA:"
-        echo "."
-        echo "-------------$fileA:"
-        echo -e "$splitFileA"
-        echo "."
-        echo "$fileB:"
-        echo "HEAD FILE"
-        head -n $((debModB-1)) "$fileB"
-        echo "SPLIT FILE"
-        echo -e "$splitFileA"
-        echo '.'
         echo "Que voulez-vous faire? "
-        echo "."
+        echo ""
         options=("Contenu de $fileA dans $fileB" "Contenu de $fileB dans $fileA" "Ignorer")
         select opt in "${options[@]}"; do
           error=0
           out=0
           case $opt in
           "Contenu de $fileA dans $fileB")
-            echo "==================$fileA IN $fileB====================="
-            echo "$fileB:"
-            echo "HEAD FILE"
-            head -n $((debModB-1)) "$fileB"
-            echo "SPLIT FILE"
-            echo "$splitFileA"
+            echo "$fileA IN $fileB"
+            if [[ $modType = "d" ]];then
+              debModA=$((debModA-1))
+            elif [[ $modType = "a" ]]; then
+              debModA=$((debModA-1))
+              finModA=$((finModA-2))
+              debModB=$((debModB-1))
+            fi
+            splitFileA=$(head -n "$finModA" "$fileA" | tail -n $((finModA-debModA+1)))
+            splitFileB=$(head -n "$finModB" "$fileB" | tail -n $((finModB-debModB+1)))
             cat "$fileB" > "$RacineB.temp"
             fileSize=$(wc -l $RacineB.temp | sed 's|\(^[0-9]*\) .*|\1|')
-            echo "---------------file size in number of lines"
-            echo $fileSize
             head -n $((debModB-1)) "$RacineB.temp" > "$fileB"
-            echo "------------Head File"
-            cat "$fileB"
             echo "$splitFileA" >> "$fileB"
             nubrLine=$(bc <<< $fileSize-$finModB+1)
-            echo "NOMBRE LIGNES TAIL"
-            echo $nubrLine
-            echo $((finModB))
-            tail -n "+$((finModB+1))" "$RacineB.temp" >> "$fileB" #ici ça merde, POURQUOI??????
+            tail -n "+$((finModB+1))" "$RacineB.temp" >> "$fileB"
             ;;
           "Contenu de $fileB dans $fileA")
+            echo "==================$fileB IN $fileA====================="
+            if [[ $modType = "d" ]];then
+              debModB=$((debModB-1))
+            elif [[ $modType = "a" ]]; then
+              debModB=$((debModB-1))
+              finModB=$((finModB-2))
+              debModA=$((debModA-1))
+            fi
+            splitFileA=$(head -n "$finModA" "$fileA" | tail -n $((finModA-debModA+1)))
+            splitFileB=$(head -n "$finModB" "$fileB" | tail -n $((finModB-debModB+1)))
             cat "$fileA" > "$RacineB.temp"
-            fileSize=$(wc -l $RacineB.temp)
+            fileSize=$(wc -l $RacineB.temp | sed 's|\(^[0-9]*\) .*|\1|')
             head -n $((debModA-1)) "$RacineB.temp" > "$fileA"
             echo "$splitFileB" >> "$fileA"
-            tail -n "$((fileSize-finModA))" "$RacineB.temp" >> "$fileA"
+            nubrLine=$(bc <<< $fileSize-$finModA+1)
+            tail -n "+$((finModA+1))" "$RacineB.temp" >> "$fileA"
             ;;
           "Ignorer")
             out=1
@@ -608,7 +596,7 @@ echo ""
   if [[ $metaDiff -eq 0 ]] ; then # si difference de metadonnées
   options2=("automatique" "manuelle" "ignorer")
   echo -e "Des \e[1mconflits de metadonnées\e[0m ont été detectés. Voulez-vous une gestion:"
-  select opt in "${options1[@]}"; do
+  select opt in "${options2[@]}"; do
   	error=0
   	case $opt in
   		"automatique" )
